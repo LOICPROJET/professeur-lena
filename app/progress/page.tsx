@@ -20,8 +20,8 @@ function avg(nums: number[]) {
 
 function computeStreak(records: HomeworkRecord[]): number {
   if (!records.length) return 0
-  const days = new Set(records.map(r => r.date.slice(0, 10)))
-  const sorted = [...days].sort().reverse()
+  const days = Array.from(new Set(records.map(r => r.date.slice(0, 10))))
+  const sorted = days.sort().reverse()
   let streak = 0
   const today = new Date()
   for (let i = 0; i < sorted.length; i++) {
