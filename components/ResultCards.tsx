@@ -174,6 +174,9 @@ export default function ResultCards({ result, subject, onNew }: ResultCardsProps
 
       {/* Header */}
       <div className="px-6 pt-4 pb-3">
+        <button onClick={onNew} className="w-9 h-9 rounded-full bg-white shadow-sm flex items-center justify-center mb-3 btn-press">
+          <span className="text-gray-500 text-lg">←</span>
+        </button>
         <div className="flex items-center gap-2 mb-0.5">
           <span className="text-2xl">⭐</span>
           <h2 className="text-2xl font-black text-[#1F2937]">Super, j'ai corrigé !</h2>

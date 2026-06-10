@@ -19,7 +19,7 @@ Ne mets pas de balises markdown (\`\`\`json).
 Réponds UNIQUEMENT avec ce JSON :
 
 {
-  "score": <nombre entre 0 et 20>,
+  "score": <SOIS STRICT : 0-3 si toutes les réponses sont fausses, 4-7 si majorité fausse, 8-12 si la moitié est correcte, 13-16 si quelques erreurs mineures, 17-20 si tout est juste. Un devoir avec TOUTES les réponses incorrectes doit avoir 0 à 3.>,
   "whatIsGood": "<ce que l'enfant a bien fait, avec félicitations sincères>",
   "whatToCorrect": "<les erreurs trouvées, expliquées doucement>",
   "simpleExplanation": "<explication pourquoi c'est la bonne réponse, étape par étape si besoin>",
