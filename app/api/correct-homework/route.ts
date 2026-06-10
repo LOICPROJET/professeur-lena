@@ -13,59 +13,70 @@ En mathématiques, montre les étapes clairement.
 En français, explique les règles simplement.
 Ne donne pas seulement la correction : aide l'enfant à comprendre.
 
-BARÈME DE NOTATION — SOIS TRÈS STRICT, note uniquement la justesse des réponses :
-- 0 à 3 : toutes les réponses sont fausses (exemple : 3×3=8 et 6×3=60 → score 2)
-- 4 à 7 : la majorité est fausse
-- 8 à 12 : environ la moitié est juste
-- 13 à 16 : quelques petites erreurs
-- 17 à 20 : tout est correct
-RÈGLE ABSOLUE : si TOUTES les réponses numériques sont incorrectes, le score NE PEUT PAS dépasser 4.
-Le fait que la présentation soit correcte ou que l'enfant ait essayé ne change pas le score.
-
 IMPORTANT : Tu dois TOUJOURS répondre avec un objet JSON valide et rien d'autre.
 Ne mets pas de texte avant ou après le JSON.
 Ne mets pas de balises markdown (\`\`\`json).
 Réponds UNIQUEMENT avec ce JSON :
 
 {
-  "score": <nombre entier entre 0 et 20>,
-  "whatIsGood": "<ce que l'enfant a bien fait, avec félicitations sincères>",
-  "whatToCorrect": "<les erreurs trouvées, expliquées doucement>",
-  "simpleExplanation": "<explication pourquoi c'est la bonne réponse, étape par étape si besoin>",
-  "memoryTip": "<un truc simple et mémorable pour ne plus se tromper>",
-  "smallExercise": "<un exercice similaire très court avec la correction entre parenthèses>",
-  "encouragement": "<message d'encouragement chaleureux et motivant pour Léna>",
-  "masteredSkills": ["<notion 1>", "<notion 2>"],
-  "weakSkills": ["<notion à retravailler 1>", "<notion à retravailler 2>"],
-  "commonMistakes": ["<erreur détectée 1>", "<erreur détectée 2>"],
-  "parentSummary": "<résumé factuel en 2-3 phrases pour le parent : ce que l'enfant a fait, ce qui est réussi et ce qui est à améliorer>",
-  "parentAdvice": "<conseil concret et bienveillant pour que le parent puisse aider son enfant à la maison>"
+  "scoringRationale": "<ÉTAPE OBLIGATOIRE — liste chaque réponse visible dans le devoir et indique JUSTE ou FAUX avec la correction. Exemple: '3×3=8 FAUX(correct:9), 6×3=60 FAUX(correct:18), 4×3=12 JUSTE'. Puis écris: 'X bonnes réponses sur Y total'. Puis déduis le score selon ces règles strictes: 0 bonnes→score 1-3, moins de moitié→score 4-9, environ moitié→score 10-12, majorité juste→score 13-16, tout juste→score 17-20. INTERDIT: la présentation soignée ou l'effort ne font PAS monter le score.>",
+  "score": <nombre entier 0-20 strictement déduit du scoringRationale — si 0 bonnes réponses, score maximum 3>,
+  "whatIsGood": "<ce que l'enfant a bien fait>",
+  "whatToCorrect": "<les erreurs, expliquées doucement>",
+  "simpleExplanation": "<explication de la bonne réponse, étape par étape>",
+  "memoryTip": "<astuce mémorable pour ne plus se tromper>",
+  "smallExercise": "<exercice similaire court avec correction entre parenthèses>",
+  "encouragement": "<message chaleureux et motivant>",
+  "masteredSkills": ["<notion maîtrisée 1>"],
+  "weakSkills": ["<notion à retravailler 1>"],
+  "commonMistakes": ["<erreur détectée 1>"],
+  "parentSummary": "<résumé factuel 2-3 phrases pour le parent>",
+  "parentAdvice": "<conseil concret pour aider à la maison>"
 }`
+
+// ─── Server-side score guard ──────────────────────────────────────────────────
+// If the model's own rationale mentions 0 correct answers but gave a high score, cap it.
+
+function guardScore(score: number, rationale: string, weakSkills: string[], masteredSkills: string[]): number {
+  const r = rationale.toLowerCase()
+
+  // Explicit "0 bonnes réponses" or "0 bonne" in rationale → cap at 3
+  if (/\b0 bonnes? réponses?\b/.test(r) || /\b0 juste\b/.test(r)) {
+    return Math.min(score, 3)
+  }
+
+  // Way more weak than mastered and high score → suspect
+  if (weakSkills.length > 0 && masteredSkills.length === 0 && score > 6) {
+    return Math.min(score, 6)
+  }
+
+  return score
+}
 
 // ─── JSON parser with fallback ────────────────────────────────────────────────
 
 function parseAIResponse(rawText: string): CorrectionResultV2 {
-  // Strip markdown code blocks if the model added them anyway
   let jsonStr = rawText
     .replace(/```json\s*/gi, '')
     .replace(/```\s*/gi, '')
     .trim()
 
-  // Extract the JSON object (find first { and last })
   const start = jsonStr.indexOf('{')
   const end = jsonStr.lastIndexOf('}')
   if (start !== -1 && end > start) {
     jsonStr = jsonStr.slice(start, end + 1)
   }
 
-  // Parse
   const data = JSON.parse(jsonStr)
-
-  // Normalize and sanitize each field
-  const score = Math.max(0, Math.min(20, Number(data.score) || 10))
 
   const str = (v: unknown) => (typeof v === 'string' ? v : String(v ?? ''))
   const arr = (v: unknown): string[] => (Array.isArray(v) ? v.map(String) : [])
+
+  const rawScore = Math.max(0, Math.min(20, Number(data.score) || 0))
+  const rationale = str(data.scoringRationale)
+  const masteredSkills = arr(data.masteredSkills)
+  const weakSkills = arr(data.weakSkills)
+  const score = guardScore(rawScore, rationale, weakSkills, masteredSkills)
 
   return {
     score,
@@ -75,8 +86,8 @@ function parseAIResponse(rawText: string): CorrectionResultV2 {
     memoryTip: str(data.memoryTip),
     smallExercise: str(data.smallExercise),
     encouragement: str(data.encouragement),
-    masteredSkills: arr(data.masteredSkills),
-    weakSkills: arr(data.weakSkills),
+    masteredSkills,
+    weakSkills,
     commonMistakes: arr(data.commonMistakes),
     parentSummary: str(data.parentSummary),
     parentAdvice: str(data.parentAdvice),
@@ -87,7 +98,7 @@ function parseAIResponse(rawText: string): CorrectionResultV2 {
 
 function fallbackResult(rawText: string): CorrectionResultV2 {
   return {
-    score: 10,
+    score: 0,
     whatIsGood: rawText.slice(0, 500) || 'Ton devoir a été analysé !',
     whatToCorrect: '',
     simpleExplanation: '',
@@ -137,7 +148,7 @@ export async function POST(req: NextRequest) {
 
     const response = await openai.chat.completions.create({
       model: 'gpt-4o',
-      max_tokens: 1500,
+      max_tokens: 2000,
       response_format: { type: 'json_object' },
       messages: [
         { role: 'system', content: SYSTEM_PROMPT },
@@ -146,7 +157,7 @@ export async function POST(req: NextRequest) {
           content: [
             {
               type: 'text',
-              text: `Matière : ${subject}. Voici la photo du devoir de Léna. Corrige-le et réponds en JSON.`,
+              text: `Matière : ${subject}. Voici la photo du devoir. Commence par remplir scoringRationale en listant chaque réponse JUSTE ou FAUX, puis déduis le score. Réponds en JSON.`,
             },
             {
               type: 'image_url',
