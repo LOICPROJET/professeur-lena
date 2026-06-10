@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
-import { getAllHomework, computeStats, GlobalStats } from '@/lib/storage'
-import { HomeworkRecord, SUBJECT_EMOJI } from '@/lib/types'
+import { getAllHomework, computeStats, GlobalStats, getChildren, saveChild, deleteChild, getActiveChildId, setActiveChildId } from '@/lib/storage'
+import { HomeworkRecord, SUBJECT_EMOJI, ChildProfile, SCHOOL_LEVELS, CHILD_EMOJIS } from '@/lib/types'
 
 // PIN is verified server-side via /api/verify-pin — never exposed in this bundle
 const PIN_STORAGE_KEY = 'plena-parent-unlocked'
@@ -208,6 +208,161 @@ function Section({ icon, title, children }: { icon: string; title: string; child
   )
 }
 
+// ─── Add/edit child form ──────────────────────────────────────────────────────
+function ChildForm({ onSave, onCancel }: { onSave: (c: ChildProfile) => void; onCancel: () => void }) {
+  const [name, setName] = useState('')
+  const [age, setAge] = useState('8')
+  const [level, setLevel] = useState('CM1')
+  const [emoji, setEmoji] = useState('👧')
+
+  const handleSubmit = () => {
+    if (!name.trim()) return
+    onSave({
+      id: `child_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+      name: name.trim(),
+      age: parseInt(age) || 8,
+      level,
+      emoji,
+      createdAt: new Date().toISOString(),
+    })
+  }
+
+  return (
+    <div className="bg-primary-50 border border-primary-100 rounded-2xl p-4 flex flex-col gap-3">
+      {/* Emoji picker */}
+      <div className="flex gap-2 justify-center">
+        {CHILD_EMOJIS.map(e => (
+          <button key={e} onClick={() => setEmoji(e)}
+            className={`w-12 h-12 rounded-2xl text-2xl flex items-center justify-center transition-all ${emoji === e ? 'bg-primary-500 shadow-md scale-110' : 'bg-white border border-gray-100'}`}>
+            {e}
+          </button>
+        ))}
+      </div>
+      {/* Name */}
+      <input
+        type="text" placeholder="Prénom de l'enfant" value={name}
+        onChange={e => setName(e.target.value)}
+        className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-bold text-[#1F2937] bg-white focus:outline-none focus:border-primary-400"
+      />
+      {/* Age + Level */}
+      <div className="flex gap-2">
+        <input
+          type="number" placeholder="Âge" value={age} min="3" max="18"
+          onChange={e => setAge(e.target.value)}
+          className="w-20 border border-gray-200 rounded-xl px-3 py-2.5 text-sm font-bold text-[#1F2937] bg-white focus:outline-none focus:border-primary-400"
+        />
+        <select value={level} onChange={e => setLevel(e.target.value)}
+          className="flex-1 border border-gray-200 rounded-xl px-3 py-2.5 text-sm font-bold text-[#1F2937] bg-white focus:outline-none focus:border-primary-400">
+          {SCHOOL_LEVELS.map(l => <option key={l} value={l}>{l}</option>)}
+        </select>
+      </div>
+      {/* Buttons */}
+      <div className="flex gap-2">
+        <button onClick={handleSubmit} disabled={!name.trim()}
+          className="flex-1 py-2.5 rounded-xl text-white font-black text-sm btn-press disabled:opacity-40"
+          style={{ background: 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)' }}>
+          ✓ Enregistrer
+        </button>
+        <button onClick={onCancel}
+          className="flex-1 py-2.5 rounded-xl bg-white border border-gray-100 text-gray-500 font-bold text-sm btn-press">
+          Annuler
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// ─── Children manager ─────────────────────────────────────────────────────────
+function ChildrenManager() {
+  const [children, setChildren] = useState<ChildProfile[]>([])
+  const [showForm, setShowForm] = useState(false)
+  const [activeId, setActiveId] = useState<string | null>(null)
+
+  useEffect(() => {
+    setChildren(getChildren())
+    setActiveId(getActiveChildId())
+  }, [])
+
+  const handleSave = (c: ChildProfile) => {
+    saveChild(c)
+    const updated = getChildren()
+    setChildren(updated)
+    // Auto-activate first child
+    if (updated.length === 1) { setActiveChildId(c.id); setActiveId(c.id) }
+    setShowForm(false)
+  }
+
+  const handleDelete = (id: string) => {
+    deleteChild(id)
+    setChildren(getChildren())
+    if (activeId === id) {
+      const remaining = getChildren()
+      const next = remaining[0]?.id ?? null
+      setActiveChildId(next)
+      setActiveId(next)
+    }
+  }
+
+  const handleActivate = (id: string) => {
+    setActiveChildId(id)
+    setActiveId(id)
+  }
+
+  return (
+    <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <span className="text-xl">👨‍👩‍👧</span>
+          <h3 className="font-black text-base text-[#1F2937]">Mes enfants</h3>
+        </div>
+        {!showForm && (
+          <button onClick={() => setShowForm(true)}
+            className="w-8 h-8 rounded-xl bg-primary-50 flex items-center justify-center text-primary-500 font-black text-lg btn-press">
+            +
+          </button>
+        )}
+      </div>
+
+      {children.length === 0 && !showForm && (
+        <p className="text-sm text-gray-400 italic text-center py-2">
+          Aucun enfant ajouté — appuie sur + pour commencer
+        </p>
+      )}
+
+      <div className="flex flex-col gap-2">
+        {children.map(c => (
+          <div key={c.id} className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${activeId === c.id ? 'bg-primary-50 border-primary-200' : 'bg-gray-50 border-gray-100'}`}>
+            <span className="text-2xl">{c.emoji}</span>
+            <div className="flex-1 min-w-0">
+              <p className="font-black text-sm text-[#1F2937]">{c.name}</p>
+              <p className="text-xs text-gray-500">{c.age} ans · {c.level}</p>
+            </div>
+            {activeId !== c.id && (
+              <button onClick={() => handleActivate(c.id)}
+                className="text-xs font-bold text-primary-500 bg-primary-50 border border-primary-200 px-2.5 py-1 rounded-lg btn-press">
+                Activer
+              </button>
+            )}
+            {activeId === c.id && (
+              <span className="text-xs font-bold text-primary-500 bg-primary-100 px-2.5 py-1 rounded-lg">✓ Actif</span>
+            )}
+            <button onClick={() => handleDelete(c.id)}
+              className="w-7 h-7 rounded-lg bg-red-50 flex items-center justify-center text-red-400 text-xs btn-press">
+              🗑
+            </button>
+          </div>
+        ))}
+      </div>
+
+      {showForm && (
+        <div className="mt-3">
+          <ChildForm onSave={handleSave} onCancel={() => setShowForm(false)} />
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 function Dashboard({ records, stats, onLock }: {
   records: HomeworkRecord[]; stats: GlobalStats; onLock: () => void
@@ -335,6 +490,9 @@ function Dashboard({ records, stats, onLock }: {
           </div>
         )}
 
+        {/* Children manager */}
+        <ChildrenManager />
+
         {/* Footer */}
         <p className="text-center text-xs text-gray-400 pb-4">
           Données stockées localement · Confidentialité garantie 🔒
@@ -361,7 +519,8 @@ export default function ParentPage() {
 
   useEffect(() => {
     if (unlocked) {
-      const all = getAllHomework()
+      const activeId = getActiveChildId()
+      const all = getAllHomework(activeId)
       setRecords(all)
       setStats(computeStats(all))
     }

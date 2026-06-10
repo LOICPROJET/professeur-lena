@@ -1,7 +1,61 @@
-import { HomeworkRecord, Badge } from './types'
+import { HomeworkRecord, Badge, ChildProfile } from './types'
 
-const STORAGE_KEY = 'professeur-lena-history'
+const STORAGE_KEY = 'professeur-lena-history'      // legacy key (no child)
+const CHILDREN_KEY = 'professeur-lena-children'
+const ACTIVE_CHILD_KEY = 'professeur-lena-active-child'
 const MAX_RECORDS = 100
+
+function homeworkKey(childId: string | null | undefined): string {
+  return childId ? `professeur-lena-history-${childId}` : STORAGE_KEY
+}
+
+// ─── Children CRUD ────────────────────────────────────────────────────────────
+
+export function getChildren(): ChildProfile[] {
+  if (typeof window === 'undefined') return []
+  try {
+    const raw = localStorage.getItem(CHILDREN_KEY)
+    if (!raw) return []
+    const data = JSON.parse(raw)
+    return Array.isArray(data) ? data : []
+  } catch { return [] }
+}
+
+export function saveChild(profile: ChildProfile): void {
+  if (typeof window === 'undefined') return
+  const existing = getChildren()
+  const updated = [profile, ...existing.filter(c => c.id !== profile.id)]
+  try { localStorage.setItem(CHILDREN_KEY, JSON.stringify(updated)) } catch { /* ignore */ }
+}
+
+export function deleteChild(id: string): void {
+  if (typeof window === 'undefined') return
+  const updated = getChildren().filter(c => c.id !== id)
+  try { localStorage.setItem(CHILDREN_KEY, JSON.stringify(updated)) } catch { /* ignore */ }
+  // Also clear their homework
+  try { localStorage.removeItem(homeworkKey(id)) } catch { /* ignore */ }
+  // If was active child, clear active
+  if (getActiveChildId() === id) setActiveChildId(null)
+}
+
+export function getActiveChildId(): string | null {
+  if (typeof window === 'undefined') return null
+  try { return localStorage.getItem(ACTIVE_CHILD_KEY) } catch { return null }
+}
+
+export function setActiveChildId(id: string | null): void {
+  if (typeof window === 'undefined') return
+  try {
+    if (id) localStorage.setItem(ACTIVE_CHILD_KEY, id)
+    else localStorage.removeItem(ACTIVE_CHILD_KEY)
+  } catch { /* ignore */ }
+}
+
+export function getActiveChild(): ChildProfile | null {
+  const id = getActiveChildId()
+  if (!id) return null
+  return getChildren().find(c => c.id === id) ?? null
+}
 
 // ─── Generate a simple unique ID ─────────────────────────────────────────────
 
@@ -35,10 +89,10 @@ export async function resizeImageForStorage(dataUrl: string): Promise<string> {
 
 // ─── Read ─────────────────────────────────────────────────────────────────────
 
-export function getAllHomework(): HomeworkRecord[] {
+export function getAllHomework(childId?: string | null): HomeworkRecord[] {
   if (typeof window === 'undefined') return []
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
+    const raw = localStorage.getItem(homeworkKey(childId))
     if (!raw) return []
     const data = JSON.parse(raw)
     return Array.isArray(data) ? data : []
@@ -47,26 +101,26 @@ export function getAllHomework(): HomeworkRecord[] {
   }
 }
 
-export function getHomeworkById(id: string): HomeworkRecord | null {
-  return getAllHomework().find((r) => r.id === id) ?? null
+export function getHomeworkById(id: string, childId?: string | null): HomeworkRecord | null {
+  return getAllHomework(childId).find((r) => r.id === id) ?? null
 }
 
 // ─── Write ────────────────────────────────────────────────────────────────────
 
-export function saveHomework(record: HomeworkRecord): void {
+export function saveHomework(record: HomeworkRecord, childId?: string | null): void {
   if (typeof window === 'undefined') return
+  const key = homeworkKey(childId)
 
   const tryWrite = (records: HomeworkRecord[]) => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(records))
+    localStorage.setItem(key, JSON.stringify(records))
   }
 
-  const existing = getAllHomework()
-  const updated = [record, ...existing.filter((r) => r.id !== record.id)].slice(0, MAX_RECORDS)
+  const existing = getAllHomework(childId)
+  const updated = [{ ...record, childId: childId ?? undefined }, ...existing.filter((r) => r.id !== record.id)].slice(0, MAX_RECORDS)
 
   try {
     tryWrite(updated)
   } catch {
-    // Quota exceeded → strip images and retry
     try {
       const stripped = updated.map((r) => ({ ...r, imageDataUrl: '' }))
       tryWrite(stripped)
@@ -78,11 +132,12 @@ export function saveHomework(record: HomeworkRecord): void {
 
 // ─── Delete ───────────────────────────────────────────────────────────────────
 
-export function deleteHomework(id: string): void {
+export function deleteHomework(id: string, childId?: string | null): void {
   if (typeof window === 'undefined') return
-  const updated = getAllHomework().filter((r) => r.id !== id)
+  const key = homeworkKey(childId)
+  const updated = getAllHomework(childId).filter((r) => r.id !== id)
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated))
+    localStorage.setItem(key, JSON.stringify(updated))
   } catch {
     /* ignore */
   }

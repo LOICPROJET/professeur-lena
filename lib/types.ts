@@ -23,7 +23,22 @@ export interface HomeworkRecord {
   subject: string                // Français | Maths | Anglais | Histoire | Autre
   imageDataUrl: string           // base64 thumbnail (may be empty if storage full)
   correction: CorrectionResultV2
+  childId?: string               // optional — null/absent = legacy records
 }
+
+// ─── Child profile ────────────────────────────────────────────────────────────
+
+export interface ChildProfile {
+  id: string
+  name: string
+  age: number
+  level: string  // CP, CE1, CE2, CM1, CM2, 6ème, 5ème, 4ème, 3ème
+  emoji: string  // 👦 👧 🧒
+  createdAt: string
+}
+
+export const SCHOOL_LEVELS = ['CP', 'CE1', 'CE2', 'CM1', 'CM2', '6ème', '5ème', '4ème', '3ème']
+export const CHILD_EMOJIS = ['👧', '👦', '🧒']
 
 // ─── Badge ────────────────────────────────────────────────────────────────────
 

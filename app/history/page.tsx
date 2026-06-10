@@ -4,8 +4,8 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import BottomNav from '@/components/BottomNav'
 import { ScoreBadge } from '@/components/ResultCards'
-import { getAllHomework, deleteHomework } from '@/lib/storage'
-import { HomeworkRecord, SUBJECT_EMOJI } from '@/lib/types'
+import { getAllHomework, deleteHomework, getActiveChild } from '@/lib/storage'
+import { HomeworkRecord, SUBJECT_EMOJI, ChildProfile } from '@/lib/types'
 
 // ─── Format date ──────────────────────────────────────────────────────────────
 function formatDate(iso: string) {
@@ -193,14 +193,17 @@ export default function HistoryPage() {
   const [records, setRecords] = useState<HomeworkRecord[]>([])
   const [selectedRecord, setSelectedRecord] = useState<HomeworkRecord | null>(null)
   const [loaded, setLoaded] = useState(false)
+  const [activeChild, setActiveChild] = useState<ChildProfile | null>(null)
 
   useEffect(() => {
-    setRecords(getAllHomework())
+    const child = getActiveChild()
+    setActiveChild(child)
+    setRecords(getAllHomework(child?.id))
     setLoaded(true)
   }, [])
 
   const handleDelete = (id: string) => {
-    deleteHomework(id)
+    deleteHomework(id, activeChild?.id)
     setRecords((prev) => prev.filter((r) => r.id !== id))
   }
 
@@ -211,7 +214,9 @@ export default function HistoryPage() {
       {/* Header */}
       <div className="px-6 pt-4 pb-4 flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-black text-[#1F2937]">Mes devoirs 📚</h2>
+          <h2 className="text-2xl font-black text-[#1F2937]">
+            {activeChild ? `${activeChild.emoji} ${activeChild.name}` : 'Mes devoirs'} 📚
+          </h2>
           <p className="text-sm text-[#8E8E93] font-medium">
             {records.length > 0 ? `${records.length} devoir${records.length > 1 ? 's' : ''} corrigé${records.length > 1 ? 's' : ''}` : 'Historique vide'}
           </p>

@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import BottomNav from '@/components/BottomNav'
-import { getAllHomework, computeBadges } from '@/lib/storage'
-import { HomeworkRecord, Badge, SUBJECT_EMOJI } from '@/lib/types'
+import { getAllHomework, computeBadges, getActiveChild } from '@/lib/storage'
+import { HomeworkRecord, Badge, ChildProfile, SUBJECT_EMOJI } from '@/lib/types'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -156,9 +156,12 @@ export default function ProgressPage() {
   const [records, setRecords] = useState<HomeworkRecord[]>([])
   const [badges, setBadges] = useState<Badge[]>([])
   const [loaded, setLoaded] = useState(false)
+  const [activeChild, setActiveChild] = useState<ChildProfile | null>(null)
 
   useEffect(() => {
-    const hw = getAllHomework()
+    const child = getActiveChild()
+    setActiveChild(child)
+    const hw = getAllHomework(child?.id)
     setRecords(hw)
     setBadges(computeBadges(hw))
     setLoaded(true)
@@ -208,7 +211,9 @@ export default function ProgressPage() {
     <div className="min-h-screen bg-[#F9FAF8] max-w-md mx-auto flex flex-col pb-24">
       <div className="h-12" />
       <div className="px-6 pt-4 pb-3">
-        <h1 className="text-2xl font-black text-[#1F2937]">Mon Évolution 📈</h1>
+        <h1 className="text-2xl font-black text-[#1F2937]">
+          {activeChild ? `${activeChild.emoji} ${activeChild.name}` : 'Mon Évolution'} 📈
+        </h1>
         <p className="text-sm text-[#8E8E93] font-medium mt-1">Tes progrès au fil du temps</p>
       </div>
       <div className="flex-1 flex flex-col items-center justify-center px-6 gap-4">
@@ -226,7 +231,9 @@ export default function ProgressPage() {
 
       {/* Header */}
       <div className="px-6 pt-4 pb-3">
-        <h1 className="text-2xl font-black text-[#1F2937]">Mon Évolution 📈</h1>
+        <h1 className="text-2xl font-black text-[#1F2937]">
+          {activeChild ? `${activeChild.emoji} ${activeChild.name}` : 'Mon Évolution'} 📈
+        </h1>
         <p className="text-sm text-[#8E8E93] font-medium mt-1">Tes progrès au fil du temps</p>
       </div>
 

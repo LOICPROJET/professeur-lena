@@ -5,8 +5,8 @@ import SubjectSelector from '@/components/SubjectSelector'
 import ResultCards from '@/components/ResultCards'
 import CameraCapture from '@/components/CameraCapture'
 import BottomNav from '@/components/BottomNav'
-import { CorrectionResultV2 } from '@/lib/types'
-import { saveHomework, generateId, resizeImageForStorage } from '@/lib/storage'
+import { CorrectionResultV2, ChildProfile } from '@/lib/types'
+import { saveHomework, generateId, resizeImageForStorage, getChildren, getActiveChildId, setActiveChildId } from '@/lib/storage'
 
 type Step = 'home' | 'subject' | 'preview' | 'loading' | 'results'
 
@@ -29,14 +29,59 @@ function LenaCharacter() {
   )
 }
 
+// ─── Child switcher ───────────────────────────────────────────────────────────
+function ChildSwitcher({ active, children, onSwitch }: {
+  active: ChildProfile | null
+  children: ChildProfile[]
+  onSwitch: (c: ChildProfile) => void
+}) {
+  const [open, setOpen] = useState(false)
+  if (!active) return null
+
+  return (
+    <div className="relative flex justify-center">
+      <button
+        onClick={() => children.length > 1 && setOpen(o => !o)}
+        className={`flex items-center gap-1.5 bg-white rounded-full px-3 py-1.5 shadow-sm border border-gray-100 ${children.length > 1 ? 'btn-press' : ''}`}
+      >
+        <span className="text-base">{active.emoji}</span>
+        <span className="text-sm font-bold text-[#1F2937]">{active.name}</span>
+        <span className="text-xs text-gray-400 font-medium">{active.level}</span>
+        {children.length > 1 && <span className="text-gray-400 text-xs ml-0.5">▾</span>}
+      </button>
+      {open && (
+        <div className="absolute top-10 left-1/2 -translate-x-1/2 bg-white rounded-2xl shadow-lg border border-gray-100 z-50 overflow-hidden min-w-[160px]">
+          {children.map(c => (
+            <button key={c.id} onClick={() => { onSwitch(c); setOpen(false) }}
+              className={`w-full flex items-center gap-2 px-4 py-3 text-sm font-bold btn-press ${c.id === active.id ? 'bg-primary-50 text-primary-600' : 'text-[#1F2937]'}`}>
+              <span>{c.emoji}</span><span>{c.name}</span><span className="text-xs text-gray-400 font-medium ml-auto">{c.level}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── Home screen ──────────────────────────────────────────────────────────────
-function HomeScreen({ onCapture }: { onCapture: (file: File, dataUrl: string) => void }) {
+function HomeScreen({ onCapture, activeChild, children, onSwitch }: {
+  onCapture: (file: File, dataUrl: string) => void
+  activeChild: ChildProfile | null
+  children: ChildProfile[]
+  onSwitch: (c: ChildProfile) => void
+}) {
+  const name = activeChild ? activeChild.name : 'toi'
   return (
     <div className="flex flex-col min-h-screen pb-20">
       <div className="h-12" />
-      <div className="px-6 pt-4 pb-2 text-center">
+      {activeChild && (
+        <div className="px-6 pt-3 pb-0 flex justify-center">
+          <ChildSwitcher active={activeChild} children={children} onSwitch={onSwitch} />
+        </div>
+      )}
+      <div className="px-6 pt-3 pb-2 text-center">
         <h1 className="text-3xl font-black text-[#1F2937] leading-tight">
-          Bonjour Léna 👋
+          Bonjour {name} 👋
         </h1>
         <p className="mt-2 text-base text-[#8E8E93] font-medium leading-snug">
           Prends ton devoir en photo,<br />
@@ -165,6 +210,18 @@ export default function Home() {
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [result, setResult] = useState<CorrectionResultV2 | null>(null)
   const [error, setError] = useState('')
+  const [childList, setChildList] = useState<ChildProfile[]>([])
+  const [activeChild, setActiveChild] = useState<ChildProfile | null>(null)
+
+  // Load children on mount
+  useState(() => {
+    const children = getChildren()
+    setChildList(children)
+    const activeId = getActiveChildId()
+    const found = children.find(c => c.id === activeId) ?? children[0] ?? null
+    if (found && found.id !== activeId) setActiveChildId(found.id)
+    setActiveChild(found)
+  })
 
   const handlePhotoCapture = useCallback((file: File, dataUrl: string) => {
     setImageFile(file)
@@ -207,7 +264,8 @@ export default function Home() {
         subject,
         imageDataUrl: thumbnail,
         correction: data,
-      })
+        childId: activeChild?.id,
+      }, activeChild?.id)
 
       setStep('results')
     } catch (err) {
@@ -225,9 +283,21 @@ export default function Home() {
     setStep('home'); setSubject(''); setImageData(''); setImageFile(null); setResult(null); setError('')
   }, [])
 
+  const handleChildSwitch = useCallback((c: ChildProfile) => {
+    setActiveChildId(c.id)
+    setActiveChild(c)
+  }, [])
+
   return (
     <main className="min-h-screen bg-[#F9FAF8] max-w-md mx-auto relative overflow-x-hidden">
-      {step === 'home' && <HomeScreen onCapture={handlePhotoCapture} />}
+      {step === 'home' && (
+        <HomeScreen
+          onCapture={handlePhotoCapture}
+          activeChild={activeChild}
+          children={childList}
+          onSwitch={handleChildSwitch}
+        />
+      )}
       {step === 'subject' && <SubjectSelector onSelect={handleSubjectSelect} onBack={() => setStep('home')} />}
       {step === 'preview' && (
         <PreviewScreen imageData={imageData} subject={subject}
