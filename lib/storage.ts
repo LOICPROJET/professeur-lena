@@ -1,4 +1,4 @@
-import { HomeworkRecord } from './types'
+import { HomeworkRecord, Badge } from './types'
 
 const STORAGE_KEY = 'professeur-lena-history'
 const MAX_RECORDS = 100
@@ -116,6 +116,122 @@ function countFrequency(items: string[]): Array<{ text: string; count: number }>
   return Object.entries(freq)
     .sort((a, b) => b[1] - a[1])
     .map(([text, count]) => ({ text, count }))
+}
+
+// ─── Badges ───────────────────────────────────────────────────────────────────
+
+export function computeBadges(records: HomeworkRecord[]): Badge[] {
+  const total = records.length
+  const sorted = [...records].sort((a, b) => a.date.localeCompare(b.date))
+  const scores = sorted.map(r => r.correction.score)
+
+  // Streak
+  const days = Array.from(new Set(records.map(r => r.date.slice(0, 10))))
+  const sortedDays = days.sort().reverse()
+  let streak = 0
+  const today = new Date()
+  for (let i = 0; i < sortedDays.length; i++) {
+    const expected = new Date(today)
+    expected.setDate(today.getDate() - i)
+    if (sortedDays[i] === expected.toISOString().slice(0, 10)) streak++
+    else break
+  }
+
+  // Per subject averages
+  const bySubject: Record<string, number[]> = {}
+  for (const r of records) {
+    if (!bySubject[r.subject]) bySubject[r.subject] = []
+    bySubject[r.subject].push(r.correction.score)
+  }
+  const subjectAvg = (s: string) => {
+    const arr = bySubject[s] ?? []
+    return arr.length >= 3 ? Math.round(arr.reduce((a, b) => a + b, 0) / arr.length) : 0
+  }
+
+  // Global average
+  const globalAvg = total > 0 ? Math.round(scores.reduce((a, b) => a + b, 0) / total) : 0
+
+  // Progress
+  const improved = scores.length >= 2 && scores[scores.length - 1] - scores[0] >= 3
+
+  const allBadges: Badge[] = [
+    {
+      id: 'first',
+      emoji: '🌱',
+      label: 'Premier pas',
+      description: 'Corriger son 1er devoir',
+      unlocked: total >= 1,
+    },
+    {
+      id: 'streak3',
+      emoji: '🔥',
+      label: 'En feu',
+      description: '3 jours de suite',
+      unlocked: streak >= 3,
+    },
+    {
+      id: 'streak7',
+      emoji: '💪',
+      label: 'Persévérant',
+      description: '7 jours de suite',
+      unlocked: streak >= 7,
+    },
+    {
+      id: 'score18',
+      emoji: '⭐',
+      label: 'Bonne note',
+      description: 'Obtenir ≥ 18/20',
+      unlocked: scores.some(s => s >= 18),
+    },
+    {
+      id: 'avg15',
+      emoji: '🏆',
+      label: 'Excellent',
+      description: 'Moyenne ≥ 15/20 (5+ exercices)',
+      unlocked: total >= 5 && globalAvg >= 15,
+    },
+    {
+      id: 'count10',
+      emoji: '📚',
+      label: 'Assidu',
+      description: '10 exercices corrigés',
+      unlocked: total >= 10,
+    },
+    {
+      id: 'count25',
+      emoji: '🚀',
+      label: 'Expert',
+      description: '25 exercices corrigés',
+      unlocked: total >= 25,
+    },
+    {
+      id: 'maths',
+      emoji: '🔢',
+      label: 'As des Maths',
+      description: 'Moyenne Maths ≥ 15 (3+ exercices)',
+      unlocked: subjectAvg('Maths') >= 15,
+    },
+    {
+      id: 'francais',
+      emoji: '📖',
+      label: 'As du Français',
+      description: 'Moyenne Français ≥ 15 (3+ exercices)',
+      unlocked: subjectAvg('Français') >= 15,
+    },
+    {
+      id: 'progress',
+      emoji: '📈',
+      label: 'En progrès',
+      description: '+3 pts entre le 1er et dernier devoir',
+      unlocked: improved,
+    },
+  ]
+
+  // Unlocked first, then locked
+  return [
+    ...allBadges.filter(b => b.unlocked),
+    ...allBadges.filter(b => !b.unlocked),
+  ]
 }
 
 export function computeStats(records: HomeworkRecord[]): GlobalStats {

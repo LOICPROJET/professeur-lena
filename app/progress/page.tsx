@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import BottomNav from '@/components/BottomNav'
-import { getAllHomework } from '@/lib/storage'
-import { HomeworkRecord, SUBJECT_EMOJI } from '@/lib/types'
+import { getAllHomework, computeBadges } from '@/lib/storage'
+import { HomeworkRecord, Badge, SUBJECT_EMOJI } from '@/lib/types'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -130,14 +130,37 @@ function StatChip({ icon, value, label }: { icon: string; value: string | number
   )
 }
 
+// ─── Badge tile ──────────────────────────────────────────────────────────────
+
+function BadgeTile({ badge }: { badge: Badge }) {
+  return (
+    <div className={`flex flex-col items-center gap-1.5 p-3 rounded-2xl border text-center ${
+      badge.unlocked
+        ? 'bg-white border-primary-200 shadow-sm'
+        : 'bg-gray-50 border-gray-100 opacity-50'
+    }`}>
+      <span className={`text-3xl ${badge.unlocked ? '' : 'grayscale'}`} style={badge.unlocked ? {} : { filter: 'grayscale(1)' }}>
+        {badge.emoji}
+      </span>
+      <span className={`text-xs font-black leading-tight ${badge.unlocked ? 'text-[#1F2937]' : 'text-gray-400'}`}>
+        {badge.label}
+      </span>
+      <span className="text-[10px] text-gray-400 leading-tight">{badge.description}</span>
+    </div>
+  )
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function ProgressPage() {
   const [records, setRecords] = useState<HomeworkRecord[]>([])
+  const [badges, setBadges] = useState<Badge[]>([])
   const [loaded, setLoaded] = useState(false)
 
   useEffect(() => {
-    setRecords(getAllHomework())
+    const hw = getAllHomework()
+    setRecords(hw)
+    setBadges(computeBadges(hw))
     setLoaded(true)
   }, [])
 
@@ -266,6 +289,19 @@ export default function ProgressPage() {
             </div>
           </div>
         )}
+
+        {/* Badges */}
+        <div className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100">
+          <div className="flex items-baseline justify-between mb-4">
+            <h3 className="font-black text-base text-[#1F2937]">Mes badges 🏅</h3>
+            <span className="text-xs text-gray-400 font-semibold">
+              {badges.filter(b => b.unlocked).length}/{badges.length} débloqués
+            </span>
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            {badges.map(b => <BadgeTile key={b.id} badge={b} />)}
+          </div>
+        </div>
 
       </div>
       <BottomNav />

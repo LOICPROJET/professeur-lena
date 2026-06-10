@@ -25,6 +25,16 @@ export interface HomeworkRecord {
   correction: CorrectionResultV2
 }
 
+// ─── Badge ────────────────────────────────────────────────────────────────────
+
+export interface Badge {
+  id: string
+  emoji: string
+  label: string
+  description: string   // condition affichée
+  unlocked: boolean
+}
+
 // ─── Subject keys ─────────────────────────────────────────────────────────────
 
 export type Subject = 'Français' | 'Maths' | 'Anglais' | 'Histoire' | 'Autre'
