@@ -137,6 +137,26 @@ function LoadingScreen() {
   )
 }
 
+// ─── Resize image before sending to API (reduces 3-5 MB phone photos to ~300 KB) ─
+async function resizeImageForAPI(dataUrl: string, maxPx = 1024, quality = 0.82): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    img.onload = () => {
+      const scale = Math.min(1, maxPx / Math.max(img.width, img.height))
+      const w = Math.round(img.width * scale)
+      const h = Math.round(img.height * scale)
+      const canvas = document.createElement('canvas')
+      canvas.width = w; canvas.height = h
+      const ctx = canvas.getContext('2d')
+      if (!ctx) { reject(new Error('canvas')); return }
+      ctx.drawImage(img, 0, 0, w, h)
+      canvas.toBlob(b => b ? resolve(b) : reject(new Error('blob')), 'image/jpeg', quality)
+    }
+    img.onerror = reject
+    img.src = dataUrl
+  })
+}
+
 // ─── Main page ────────────────────────────────────────────────────────────────
 export default function Home() {
   const [step, setStep] = useState<Step>('home')
@@ -159,13 +179,15 @@ export default function Home() {
   }, [])
 
   const handleCorrect = useCallback(async () => {
-    if (!imageFile) return
+    if (!imageFile && !imageData) return
     setStep('loading')
     setError('')
 
     try {
+      // Resize before upload — phone cameras produce 3-5 MB, Vercel limit is ~4.5 MB
+      const resizedBlob = await resizeImageForAPI(imageData)
       const formData = new FormData()
-      formData.append('image', imageFile)
+      formData.append('image', resizedBlob, 'homework.jpg')
       formData.append('subject', subject)
 
       const response = await fetch('/api/correct-homework', { method: 'POST', body: formData })
