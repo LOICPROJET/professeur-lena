@@ -9,6 +9,7 @@ export default function BottomNav() {
   const tabs = [
     { href: '/', label: 'Accueil', emoji: '🏠', activeEmoji: '🏠' },
     { href: '/history', label: 'Historique', emoji: '🕐', activeEmoji: '🕐' },
+    { href: '/progress', label: 'Évolution', emoji: '📈', activeEmoji: '📈' },
   ]
 
   return (
