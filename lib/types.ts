@@ -26,6 +26,26 @@ export interface HomeworkRecord {
   childId?: string               // optional — null/absent = legacy records
 }
 
+// ─── Quiz (Réviser) ───────────────────────────────────────────────────────────
+
+export interface QuizQuestion {
+  id: number
+  question: string
+}
+
+export interface QuizQuestionResult {
+  id: number
+  correct: boolean
+  feedback: string   // empty if correct
+}
+
+export interface QuizResult {
+  score: number
+  results: QuizQuestionResult[]
+  globalFeedback: string
+  encouragement: string
+}
+
 // ─── Child profile ────────────────────────────────────────────────────────────
 
 export interface ChildProfile {
