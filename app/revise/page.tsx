@@ -3,9 +3,10 @@
 import { useState, useCallback, useRef } from 'react'
 import BottomNav from '@/components/BottomNav'
 import CameraCapture from '@/components/CameraCapture'
+import SubjectSelector from '@/components/SubjectSelector'
 import { QuizQuestion, QuizResult } from '@/lib/types'
 
-type Step = 'home' | 'loading-questions' | 'quiz' | 'loading-check' | 'results'
+type Step = 'home' | 'subject' | 'loading-questions' | 'quiz' | 'loading-check' | 'results'
 
 // ─── Resize image (same as main page) ────────────────────────────────────────
 async function resizeImage(dataUrl: string, maxPx = 1024, quality = 0.82): Promise<Blob> {
@@ -302,22 +303,28 @@ function ResultsScreen({
 export default function RevisePage() {
   const [step, setStep] = useState<Step>('home')
   const [imageData, setImageData] = useState('')
+  const [subject, setSubject] = useState('Général')
   const [title, setTitle] = useState('')
   const [questions, setQuestions] = useState<QuizQuestion[]>([])
   const [answers, setAnswers] = useState<Record<number, string>>({})
   const [result, setResult] = useState<QuizResult | null>(null)
   const [error, setError] = useState('')
 
-  const handleCapture = useCallback(async (_file: File, dataUrl: string) => {
+  const handleCapture = useCallback((_file: File, dataUrl: string) => {
     setImageData(dataUrl)
     setError('')
+    setStep('subject')
+  }, [])
+
+  const handleSubjectSelect = useCallback(async (selectedSubject: string) => {
+    setSubject(selectedSubject)
     setStep('loading-questions')
 
     try {
-      const resized = await resizeImage(dataUrl)
+      const resized = await resizeImage(imageData)
       const formData = new FormData()
       formData.append('image', resized, 'lesson.jpg')
-      formData.append('subject', 'Général')
+      formData.append('subject', selectedSubject)
 
       const res = await fetch('/api/generate-questions', { method: 'POST', body: formData })
       const data = await res.json()
@@ -330,7 +337,7 @@ export default function RevisePage() {
       setError("Je n'arrive pas à lire la leçon. Reprends la photo.")
       setStep('home')
     }
-  }, [])
+  }, [imageData])
 
   const handleSubmit = useCallback(async (submittedAnswers: Record<number, string>) => {
     setAnswers(submittedAnswers)
@@ -362,6 +369,7 @@ export default function RevisePage() {
   const handleNew = useCallback(() => {
     setStep('home')
     setImageData('')
+    setSubject('Général')
     setTitle('')
     setQuestions([])
     setAnswers({})
@@ -378,6 +386,12 @@ export default function RevisePage() {
         </div>
       )}
       {step === 'home' && <HomeScreen onCapture={handleCapture} />}
+      {step === 'subject' && (
+        <SubjectSelector
+          onSelect={handleSubjectSelect}
+          onBack={() => setStep('home')}
+        />
+      )}
       {step === 'loading-questions' && <LoadingScreen message={"Je prépare tes questions…"} />}
       {step === 'quiz' && (
         <QuizScreen
