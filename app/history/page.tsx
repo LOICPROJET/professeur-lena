@@ -212,21 +212,13 @@ export default function HistoryPage() {
       <div className="h-12" />
 
       {/* Header */}
-      <div className="px-6 pt-4 pb-4 flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-black text-[#1F2937]">
-            {activeChild ? `${activeChild.emoji} ${activeChild.name}` : 'Mes devoirs'} 📚
-          </h2>
-          <p className="text-sm text-[#8E8E93] font-medium">
-            {records.length > 0 ? `${records.length} devoir${records.length > 1 ? 's' : ''} corrigé${records.length > 1 ? 's' : ''}` : 'Historique vide'}
-          </p>
-        </div>
-        {/* Parent access */}
-        <Link href="/parent"
-          className="flex flex-col items-center gap-0.5 bg-white rounded-2xl px-3 py-2 shadow-sm border border-gray-100 btn-press">
-          <span className="text-lg">👨‍👩‍👧</span>
-          <span className="text-[10px] font-bold text-[#8E8E93]">Parent</span>
-        </Link>
+      <div className="px-6 pt-4 pb-4">
+        <h2 className="text-2xl font-black text-[#1F2937]">
+          {activeChild ? `${activeChild.emoji} ${activeChild.name}` : 'Mes devoirs'} 📚
+        </h2>
+        <p className="text-sm text-[#8E8E93] font-medium">
+          {records.length > 0 ? `${records.length} devoir${records.length > 1 ? 's' : ''} corrigé${records.length > 1 ? 's' : ''}` : 'Historique vide'}
+        </p>
       </div>
 
       {/* Content */}

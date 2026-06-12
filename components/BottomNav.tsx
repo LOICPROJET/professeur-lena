@@ -11,14 +11,15 @@ export default function BottomNav() {
     { href: '/history', label: 'Devoirs', emoji: '🕐', activeEmoji: '🕐' },
     { href: '/progress', label: 'Progrès', emoji: '📈', activeEmoji: '📈' },
     { href: '/revise', label: 'Réviser', emoji: '🧠', activeEmoji: '🧠' },
-    { href: '/reports', label: 'Rapport', emoji: '📋', activeEmoji: '📋' },
+    { href: '/parent', label: 'Parent', emoji: '👨‍👩‍👧', activeEmoji: '👨‍👩‍👧' },
   ]
 
   return (
     <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-white/90 backdrop-blur-sm border-t border-gray-100 z-50">
       <div className="flex">
         {tabs.map((tab) => {
-          const isActive = pathname === tab.href
+          const isActive = pathname === tab.href ||
+            (tab.href === '/parent' && pathname === '/reports')
           return (
             <Link
               key={tab.href}
