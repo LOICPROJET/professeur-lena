@@ -11,6 +11,10 @@ interface ResultCardsProps {
   result: CorrectionResultV2
   subject: string
   onNew: () => void
+  /** Prénom de l'enfant actif — utilisé dans BravoBanner */
+  childName?: string
+  /** Niveau scolaire (CP/CE1/CE2/CM1/CM2) — adapte le message de réconfort */
+  childLevel?: string
 }
 
 // ─── Score badge ──────────────────────────────────────────────────────────────
@@ -56,6 +60,43 @@ function ScoreBar({ score }: { score: number }) {
             />
           </div>
         </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Léna message (score < 10) ────────────────────────────────────────────────
+// Carte bienveillante affichée AVANT le score pour amortir l'impact émotionnel
+// des mauvaises notes. Message adapté au niveau scolaire de l'enfant.
+
+const LENA_LOW_SCORE_MESSAGES: Record<string, string> = {
+  CP:  "Ne t'inquiète pas. Les erreurs servent à apprendre. On va y arriver ensemble ! 🌱",
+  CE1: "Tu fais déjà des progrès. Regardons ensemble ce qu'on peut améliorer. 💪",
+  CE2: "Certaines notions sont encore difficiles. C'est normal, on va les travailler ensemble. 📚",
+  CM1: "Ce devoir était difficile. Les erreurs permettent de progresser. Continue ! ⭐",
+  CM2: "Ce devoir demande encore un peu d'entraînement. Tu es capable d'y arriver. 🎯",
+}
+
+function LenaMessage({ level }: { level?: string }) {
+  const message =
+    (level && LENA_LOW_SCORE_MESSAGES[level]) ??
+    LENA_LOW_SCORE_MESSAGES['CM1']
+
+  return (
+    <div className="bg-primary-50 border border-primary-100 rounded-3xl p-4 animate-slide-up" style={{ animationDelay: '0ms' }}>
+      <div className="flex items-center gap-3">
+        <div className="w-11 h-11 bg-primary-100 rounded-2xl flex items-center justify-center text-xl flex-shrink-0 shadow-sm">
+          💜
+        </div>
+        <div className="flex-1">
+          <p className="text-[11px] font-black text-primary-500 uppercase tracking-wide mb-1">
+            Léna dit :
+          </p>
+          <p className="text-sm text-primary-800 font-medium leading-snug">
+            {message}
+          </p>
+        </div>
+        <div className="text-3xl flex-shrink-0 select-none">👧</div>
       </div>
     </div>
   )
@@ -110,15 +151,18 @@ function ResultCard({ icon, title, content, bgColor, borderColor, iconBg, titleC
 }
 
 // ─── Bravo banner ─────────────────────────────────────────────────────────────
-function BravoBanner({ content }: { content: string }) {
+function BravoBanner({ content, childName }: { content: string; childName?: string }) {
   if (!content) return null
+  // Félicite l'enfant par son prénom — jamais "Bravo Léna !" qui désigne la prof
+  const title = childName?.trim() ? `Bravo ${childName.trim()} !` : 'Bravo !'
+
   return (
     <div className="rounded-3xl p-5 shadow-lg shadow-primary-200/50 animate-slide-up"
       style={{ animationDelay: '480ms', background: 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)' }}>
       <div className="flex items-start gap-3">
         <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0">🌟</div>
         <div className="flex-1">
-          <h3 className="text-white font-black text-base mb-1">Bravo Léna !</h3>
+          <h3 className="text-white font-black text-base mb-1">{title}</h3>
           <p className="text-white/90 text-sm font-medium leading-snug">{content}</p>
         </div>
       </div>
@@ -130,7 +174,7 @@ function BravoBanner({ content }: { content: string }) {
 }
 
 // ─── Main component ───────────────────────────────────────────────────────────
-export default function ResultCards({ result, subject, onNew }: ResultCardsProps) {
+export default function ResultCards({ result, subject, onNew, childName, childLevel }: ResultCardsProps) {
   const emoji = SUBJECT_EMOJI[subject] || '✨'
 
   const cards: CardProps[] = [
@@ -186,6 +230,13 @@ export default function ResultCards({ result, subject, onNew }: ResultCardsProps
         </p>
       </div>
 
+      {/* Message bienveillant Léna — affiché uniquement pour score < 10 */}
+      {result.score < 10 && (
+        <div className="px-6 mb-2">
+          <LenaMessage level={childLevel} />
+        </div>
+      )}
+
       {/* Score bar */}
       <div className="px-6 mb-1 animate-slide-up" style={{ animationDelay: '0ms' }}>
         <ScoreBar score={result.score} />
@@ -196,7 +247,7 @@ export default function ResultCards({ result, subject, onNew }: ResultCardsProps
         {cards.map((card) => (
           <ResultCard key={card.title} {...card} />
         ))}
-        <BravoBanner content={result.encouragement} />
+        <BravoBanner content={result.encouragement} childName={childName} />
       </div>
 
       {/* Actions */}

@@ -4,6 +4,7 @@ import { useState, useCallback, useRef, useEffect } from 'react'
 import BottomNav from '@/components/BottomNav'
 import CameraCapture from '@/components/CameraCapture'
 import SubjectSelector from '@/components/SubjectSelector'
+import LenaCharacter from '@/components/LenaCharacter'
 import { QuizQuestion, QuizResult } from '@/lib/types'
 import { getOrCreateActiveChild } from '@/lib/storage'
 
@@ -41,7 +42,7 @@ function LoadingScreen({ message }: { message: string }) {
     <div className="flex flex-col items-center justify-center min-h-screen gap-8 px-6 animate-fade-in">
       <div className="relative">
         <div className="w-32 h-32 bg-gradient-to-br from-primary-100 to-primary-200 rounded-full flex items-center justify-center shadow-lg animate-pulse-soft">
-          <span className="text-6xl">🧠</span>
+          <span className="text-6xl">👧</span>
         </div>
         <div className="absolute inset-0 rounded-full border-4 border-primary-300 border-t-primary-500 animate-spin" />
       </div>
@@ -59,7 +60,9 @@ function HomeScreen({ onCapture }: { onCapture: (file: File, dataUrl: string) =>
     <div className="flex flex-col min-h-screen pb-24">
       <div className="h-12" />
       <div className="px-6 pt-4 pb-2 text-center">
-        <div className="text-6xl mb-3">🧠</div>
+        <div className="flex justify-center mb-3">
+          <LenaCharacter size="md" />
+        </div>
         <h1 className="text-3xl font-black text-[#1F2937] leading-tight">Réviser ma leçon</h1>
         <p className="mt-2 text-base text-[#8E8E93] font-medium leading-snug">
           Prends ta leçon en photo,<br />

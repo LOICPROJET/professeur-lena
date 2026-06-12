@@ -7,6 +7,7 @@ import ResultCards from '@/components/ResultCards'
 import CameraCapture from '@/components/CameraCapture'
 import BottomNav from '@/components/BottomNav'
 import ChildSelector from '@/components/ChildSelector'
+import LenaCharacter from '@/components/LenaCharacter'
 import Link from 'next/link'
 import { CorrectionResultV2, ChildProfile } from '@/lib/types'
 import {
@@ -22,25 +23,6 @@ import {
 } from '@/lib/storage'
 
 type Step = 'home' | 'subject' | 'preview' | 'loading' | 'results'
-
-// ─── Léna character ───────────────────────────────────────────────────────────
-function LenaCharacter() {
-  return (
-    <div className="relative flex items-center justify-center">
-      <div className="w-44 h-44 relative animate-bounce-gentle">
-        <div className="absolute inset-0 bg-primary-200 rounded-full opacity-30 scale-110" />
-        <div className="absolute inset-0 bg-gradient-to-br from-primary-100 to-primary-200 rounded-full flex items-center justify-center shadow-lg">
-          <div className="text-center select-none">
-            <div className="text-7xl leading-none">👧</div>
-            <div className="mt-1 text-xs font-bold text-primary-600 tracking-wide">Léna</div>
-          </div>
-        </div>
-        <div className="absolute -top-2 -right-2 text-2xl animate-pulse">✨</div>
-        <div className="absolute -bottom-1 -left-2 text-xl animate-pulse" style={{ animationDelay: '0.5s' }}>⭐</div>
-      </div>
-    </div>
-  )
-}
 
 // ─── Child pill (triggers ChildSelector sheet) ────────────────────────────────
 function ChildPill({
@@ -413,7 +395,13 @@ export default function Home() {
               <button onClick={() => setStorageWarning(false)} className="ml-1 text-amber-500 font-black text-sm">✕</button>
             </div>
           )}
-          <ResultCards result={result} subject={subject} onNew={handleNewHomework} />
+          <ResultCards
+            result={result}
+            subject={subject}
+            onNew={handleNewHomework}
+            childName={activeChild?.name}
+            childLevel={activeChild?.level}
+          />
         </div>
       )}
 
