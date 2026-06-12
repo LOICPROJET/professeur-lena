@@ -8,9 +8,10 @@ export default function BottomNav() {
 
   const tabs = [
     { href: '/', label: 'Accueil', emoji: '🏠', activeEmoji: '🏠' },
-    { href: '/history', label: 'Historique', emoji: '🕐', activeEmoji: '🕐' },
-    { href: '/progress', label: 'Évolution', emoji: '📈', activeEmoji: '📈' },
+    { href: '/history', label: 'Devoirs', emoji: '🕐', activeEmoji: '🕐' },
+    { href: '/progress', label: 'Progrès', emoji: '📈', activeEmoji: '📈' },
     { href: '/revise', label: 'Réviser', emoji: '🧠', activeEmoji: '🧠' },
+    { href: '/reports', label: 'Rapport', emoji: '📋', activeEmoji: '📋' },
   ]
 
   return (

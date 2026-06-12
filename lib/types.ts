@@ -75,6 +75,51 @@ export interface Badge {
   unlocked: boolean
 }
 
+// ─── Weekly report ───────────────────────────────────────────────────────────
+
+export interface WeeklyReport {
+  id: string
+  childId: string
+  generatedAt: string          // ISO 8601
+  weekStart: string            // ISO 8601 — 7 days before generatedAt
+  weekEnd: string              // ISO 8601 — moment of generation
+  totalCorrections: number
+  averageScore: number         // /20; 0 when totalCorrections === 0
+  scoreTrend: number           // last7Avg − prev7Avg; 0 if insufficient data
+  strengths: string[]          // top 3 masteredSkills across the week
+  weaknesses: string[]         // top 3 weakSkills across the week
+  mostWorkedSubject: string | null
+  bestSubject: string | null   // highest avg in the week (min 1 record)
+  parentSummary: string        // natural language summary
+  recommendation: string       // Léna's recommendation for the parent
+}
+
+// ─── Report export (for PDF / email — future use) ─────────────────────────────
+
+export interface ReportExport {
+  meta: {
+    reportId: string
+    generatedAt: string
+    weekStart: string
+    weekEnd: string
+    childName: string
+    childEmoji: string
+  }
+  stats: {
+    totalCorrections: number
+    averageScore: number
+    scoreTrend: number
+    mostWorkedSubject: string | null
+    bestSubject: string | null
+  }
+  insights: {
+    strengths: string[]
+    weaknesses: string[]
+    parentSummary: string
+    recommendation: string
+  }
+}
+
 // ─── Subject keys ─────────────────────────────────────────────────────────────
 
 export type Subject = 'Français' | 'Maths' | 'Anglais' | 'Histoire' | 'Autre'

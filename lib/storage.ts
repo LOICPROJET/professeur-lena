@@ -1,13 +1,18 @@
-import { HomeworkRecord, Badge, ChildProfile, MAX_CHILDREN } from './types'
+import { HomeworkRecord, Badge, ChildProfile, MAX_CHILDREN, WeeklyReport, ReportExport } from './types'
 
 const STORAGE_KEY = 'professeur-lena-history'      // legacy key (no child)
 const CHILDREN_KEY = 'professeur-lena-children'
 const ACTIVE_CHILD_KEY = 'professeur-lena-active-child'
 const MIGRATION_KEY = 'professeur-lena-migrated-v1'
 const MAX_RECORDS = 100
+const MAX_REPORTS = 12
 
 function homeworkKey(childId: string | null | undefined): string {
   return childId ? `professeur-lena-history-${childId}` : STORAGE_KEY
+}
+
+function reportsKey(childId: string): string {
+  return `professeur-lena-reports-${childId}`
 }
 
 // ─── Children CRUD ────────────────────────────────────────────────────────────
@@ -563,5 +568,152 @@ export function computeProgressStats(records: HomeworkRecord[]): ProgressStats {
       : 0,
     mostWorkedSubject,
     bestSubject,
+  }
+}
+
+// ─── Weekly reports ───────────────────────────────────────────────────────────
+
+export function getWeeklyReports(childId: string): WeeklyReport[] {
+  if (typeof window === 'undefined') return []
+  try {
+    const raw = localStorage.getItem(reportsKey(childId))
+    if (!raw) return []
+    const data = JSON.parse(raw)
+    return Array.isArray(data) ? data : []
+  } catch { return [] }
+}
+
+export function saveWeeklyReport(report: WeeklyReport): void {
+  if (typeof window === 'undefined') return
+  const existing = getWeeklyReports(report.childId)
+  // Deduplicate by id, most recent first, cap at MAX_REPORTS
+  const updated = [report, ...existing.filter(r => r.id !== report.id)].slice(0, MAX_REPORTS)
+  try {
+    localStorage.setItem(reportsKey(report.childId), JSON.stringify(updated))
+  } catch {
+    console.warn('[Léna] Could not save weekly report (quota exceeded)')
+  }
+}
+
+/**
+ * Generates a WeeklyReport from the last 7 days of homework for a given child.
+ * Does NOT save automatically — call saveWeeklyReport() afterwards.
+ */
+export function generateWeeklyReport(childId: string): WeeklyReport {
+  const records = getAllHomework(childId)
+  const now = Date.now()
+  const DAY = 86_400_000
+
+  const last7 = records.filter(r => now - new Date(r.date).getTime() < 7 * DAY)
+  const prev7 = records.filter(r => {
+    const age = now - new Date(r.date).getTime()
+    return age >= 7 * DAY && age < 14 * DAY
+  })
+
+  const totalCorrections = last7.length
+  const averageScore = avgOfRecords(last7)
+  const prev7Avg = avgOfRecords(prev7)
+  const scoreTrend = last7.length > 0 && prev7.length > 0
+    ? Math.round((averageScore - prev7Avg) * 10) / 10
+    : 0
+
+  // Subject analysis on this week's records
+  const subjectCount: Record<string, number> = {}
+  const subjectScores: Record<string, number[]> = {}
+  for (const r of last7) {
+    subjectCount[r.subject] = (subjectCount[r.subject] || 0) + 1
+    if (!subjectScores[r.subject]) subjectScores[r.subject] = []
+    subjectScores[r.subject].push(r.correction.score)
+  }
+
+  const mostWorkedSubject = Object.entries(subjectCount)
+    .sort((a, b) => b[1] - a[1])[0]?.[0] ?? null
+
+  const bestSubject = Object.entries(subjectScores)
+    .map(([subject, scores]) => ({ subject, avg: scores.reduce((a, b) => a + b, 0) / scores.length }))
+    .sort((a, b) => b.avg - a.avg)[0]?.subject ?? null
+
+  // Skills frequency for this week
+  const allMastered = last7.flatMap(r => r.correction.masteredSkills ?? [])
+  const allWeak = last7.flatMap(r => r.correction.weakSkills ?? [])
+  const strengths = countFrequency(allMastered).slice(0, 3).map(x => x.text)
+  const weaknesses = countFrequency(allWeak).slice(0, 3).map(x => x.text)
+
+  // Natural language messages
+  let parentSummary: string
+  let recommendation: string
+
+  if (totalCorrections === 0) {
+    parentSummary = "Aucun exercice corrigé cette semaine."
+    recommendation = "Cette semaine a été calme. Quelques exercices réguliers permettront de reprendre le rythme."
+  } else if (totalCorrections === 1) {
+    parentSummary = `1 exercice corrigé cette semaine${averageScore > 0 ? `, avec une note de ${averageScore}/20` : ''}.`
+    recommendation = "Un bon début ! L'idéal serait de viser 2 à 3 exercices par semaine pour progresser régulièrement."
+  } else {
+    const subjectStr = mostWorkedSubject ? ` en ${mostWorkedSubject}` : ''
+    parentSummary = `${totalCorrections} exercices corrigés cette semaine${subjectStr}, avec une moyenne de ${averageScore}/20.`
+
+    if (scoreTrend > 1) {
+      recommendation = `Belle progression cette semaine (+${scoreTrend} pts vs la semaine précédente). Les efforts paient, continuez ainsi !`
+    } else if (scoreTrend < -1) {
+      const tip = weaknesses.length > 0 ? ` sur "${weaknesses[0]}"` : ''
+      recommendation = `Une légère baisse est observée (${scoreTrend} pts). Quelques révisions ciblées${tip} devraient rapidement aider.`
+    } else if (averageScore >= 16) {
+      recommendation = `Excellente semaine ! La moyenne de ${averageScore}/20 est remarquable. Encouragez à maintenir ce rythme.`
+    } else if (averageScore >= 13) {
+      recommendation = `Bonne semaine dans l'ensemble (${averageScore}/20). Continuez à encourager et à maintenir la régularité.`
+    } else if (averageScore >= 10) {
+      recommendation = `Semaine correcte (${averageScore}/20). Insistez sur les points à retravailler pour progresser davantage.`
+    } else {
+      recommendation = `La semaine montre quelques difficultés (moy. ${averageScore}/20). Un accompagnement ciblé serait bénéfique cette semaine.`
+    }
+  }
+
+  return {
+    id: `report_${childId}_${Date.now()}`,
+    childId,
+    generatedAt: new Date().toISOString(),
+    weekStart: new Date(now - 6 * DAY).toISOString(),
+    weekEnd: new Date(now).toISOString(),
+    totalCorrections,
+    averageScore,
+    scoreTrend,
+    strengths,
+    weaknesses,
+    mostWorkedSubject,
+    bestSubject,
+    parentSummary,
+    recommendation,
+  }
+}
+
+/**
+ * Returns a clean, serialisable structure from a WeeklyReport.
+ * Designed for reuse when PDF export or email sending is implemented.
+ */
+export function buildReportData(report: WeeklyReport): ReportExport {
+  const child = getChildren().find(c => c.id === report.childId)
+  return {
+    meta: {
+      reportId: report.id,
+      generatedAt: report.generatedAt,
+      weekStart: report.weekStart,
+      weekEnd: report.weekEnd,
+      childName: child?.name ?? 'Enfant',
+      childEmoji: child?.emoji ?? '👧',
+    },
+    stats: {
+      totalCorrections: report.totalCorrections,
+      averageScore: report.averageScore,
+      scoreTrend: report.scoreTrend,
+      mostWorkedSubject: report.mostWorkedSubject,
+      bestSubject: report.bestSubject,
+    },
+    insights: {
+      strengths: report.strengths,
+      weaknesses: report.weaknesses,
+      parentSummary: report.parentSummary,
+      recommendation: report.recommendation,
+    },
   }
 }
