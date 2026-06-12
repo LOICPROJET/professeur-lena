@@ -245,9 +245,16 @@ export default function ProgressPage() {
 
       {/* Header */}
       <div className="px-6 pt-4 pb-3">
-        <h1 className="text-2xl font-black text-[#1F2937]">
-          {activeChild ? `${activeChild.emoji} ${activeChild.name}` : 'Mon Évolution'} 📈
-        </h1>
+        <div className="flex items-center gap-2 flex-wrap">
+          <h1 className="text-2xl font-black text-[#1F2937]">
+            {activeChild ? `${activeChild.emoji} ${activeChild.name}` : 'Mon Évolution'} 📈
+          </h1>
+          {activeChild?.level && (
+            <span className="text-xs font-black text-white bg-primary-500 px-2 py-0.5 rounded-lg">
+              {activeChild.level}
+            </span>
+          )}
+        </div>
         <p className="text-sm text-[#8E8E93] font-medium mt-1">Tes progrès au fil du temps</p>
       </div>
 

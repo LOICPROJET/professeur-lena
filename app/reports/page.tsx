@@ -280,9 +280,16 @@ export default function ReportsPage() {
 
       {/* Header */}
       <div className="px-6 pt-4 pb-4">
-        <h2 className="text-2xl font-black text-[#1F2937]">
-          {activeChild ? `${activeChild.emoji} ${activeChild.name}` : '📋 Rapports'}
-        </h2>
+        <div className="flex items-center gap-2 flex-wrap">
+          <h2 className="text-2xl font-black text-[#1F2937]">
+            {activeChild ? `${activeChild.emoji} ${activeChild.name}` : '📋 Rapports'}
+          </h2>
+          {activeChild?.level && (
+            <span className="text-xs font-black text-white bg-primary-500 px-2 py-0.5 rounded-lg">
+              {activeChild.level}
+            </span>
+          )}
+        </div>
         <p className="text-sm text-[#8E8E93] font-medium">Bilan hebdomadaire</p>
       </div>
 

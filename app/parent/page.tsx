@@ -286,8 +286,10 @@ function ChildForm({
 }) {
   const [name, setName] = useState(initial?.name ?? '')
   const [age, setAge] = useState(String(initial?.age ?? 8))
-  const [level, setLevel] = useState(initial?.level ?? 'CM1')
+  const [level, setLevel] = useState(initial?.level ?? '')
   const [emoji, setEmoji] = useState(initial?.emoji ?? '👧')
+
+  const PRIMARY_LEVELS = ['CP', 'CE1', 'CE2', 'CM1', 'CM2']
 
   const isEdit = Boolean(initial)
 
@@ -326,24 +328,53 @@ function ChildForm({
         className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-bold text-[#1F2937] bg-white focus:outline-none focus:border-primary-400"
         autoFocus
       />
-      {/* Age + Level */}
-      <div className="flex gap-2">
-        <input
-          type="number"
-          placeholder="Âge"
-          value={age}
-          min="3"
-          max="18"
-          onChange={e => setAge(e.target.value)}
-          className="w-20 border border-gray-200 rounded-xl px-3 py-2.5 text-sm font-bold text-[#1F2937] bg-white focus:outline-none focus:border-primary-400"
-        />
-        <select
-          value={level}
-          onChange={e => setLevel(e.target.value)}
-          className="flex-1 border border-gray-200 rounded-xl px-3 py-2.5 text-sm font-bold text-[#1F2937] bg-white focus:outline-none focus:border-primary-400"
-        >
-          {SCHOOL_LEVELS.map(l => <option key={l} value={l}>{l}</option>)}
-        </select>
+      {/* Age */}
+      <input
+        type="number"
+        placeholder="Âge (optionnel)"
+        value={age}
+        min="3"
+        max="18"
+        onChange={e => setAge(e.target.value)}
+        className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm font-bold text-[#1F2937] bg-white focus:outline-none focus:border-primary-400"
+      />
+
+      {/* Classe — champ visuellement important */}
+      <div className="bg-white border border-gray-100 rounded-2xl p-3 flex flex-col gap-2">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-black text-[#1F2937]">Classe de l&apos;enfant</span>
+          <span className="text-[10px] font-black text-primary-600 bg-primary-50 border border-primary-100 px-2 py-0.5 rounded-full">
+            Recommandé
+          </span>
+        </div>
+        <p className="text-[10px] text-gray-400 leading-snug -mt-1">
+          Permet à Léna d&apos;adapter ses explications au niveau réel de votre enfant.
+        </p>
+        <div className="flex flex-wrap gap-1.5">
+          {PRIMARY_LEVELS.map(l => (
+            <button
+              key={l}
+              type="button"
+              onClick={() => setLevel(level === l ? '' : l)}
+              className={`px-3 py-1.5 rounded-xl text-sm font-black transition-all btn-press ${
+                level === l
+                  ? 'text-white shadow-sm'
+                  : 'bg-gray-50 border border-gray-200 text-gray-500'
+              }`}
+              style={level === l ? { background: 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)' } : undefined}
+            >
+              {l}
+            </button>
+          ))}
+        </div>
+        {!level && (
+          <div className="flex items-start gap-1.5 bg-amber-50 border border-amber-100 rounded-xl p-2.5 mt-1">
+            <span className="text-sm flex-shrink-0 leading-none mt-px">⚠️</span>
+            <p className="text-[11px] text-amber-700 font-medium leading-snug">
+              Pour une correction vraiment adaptée, choisissez la classe de votre enfant.
+            </p>
+          </div>
+        )}
       </div>
       {/* Buttons */}
       <div className="flex gap-2">
@@ -506,11 +537,16 @@ function ChildrenManager({ onRefresh }: { onRefresh?: () => void }) {
                 <span className="text-2xl">{c.emoji}</span>
                 <div className="flex-1 min-w-0">
                   <p className="font-black text-sm text-[#1F2937]">{c.name}</p>
-                  <p className="text-xs text-gray-500">
-                    {c.age ? `${c.age} ans` : ''}
-                    {c.age && c.level ? ' · ' : ''}
-                    {c.level ?? ''}
-                  </p>
+                  <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
+                    {c.age && <span className="text-xs text-gray-400">{c.age} ans</span>}
+                    {c.level ? (
+                      <span className="text-[10px] font-black text-white bg-primary-400 px-1.5 py-0.5 rounded-md">
+                        {c.level}
+                      </span>
+                    ) : (
+                      <span className="text-[10px] text-amber-500 font-semibold">⚠️ Classe non renseignée</span>
+                    )}
+                  </div>
                 </div>
 
                 {/* Edit button */}
@@ -748,11 +784,18 @@ function Dashboard({
           <div className="grid grid-cols-2 gap-3">
             <div className="bg-primary-50 border border-primary-100 rounded-2xl p-4 flex items-center gap-3">
               <div className="text-3xl">{activeChild.emoji}</div>
-              <div>
-                <div className="font-black text-sm text-primary-700">{activeChild.name}</div>
-                <div className="text-xs text-primary-500 font-medium">
-                  {activeChild.level ?? 'Enfant actif'}
-                </div>
+              <div className="flex-1 min-w-0">
+                <div className="font-black text-sm text-primary-700 truncate">{activeChild.name}</div>
+                {activeChild.level ? (
+                  <span className="inline-block text-[10px] font-black text-white bg-primary-500 px-1.5 py-0.5 rounded-md mt-0.5">
+                    {activeChild.level}
+                  </span>
+                ) : (
+                  <div className="mt-0.5">
+                    <p className="text-[10px] text-amber-600 font-bold leading-snug">⚠️ Niveau non renseigné</p>
+                    <p className="text-[9px] text-amber-500 font-medium leading-snug">Modifiez le profil pour adapter les corrections.</p>
+                  </div>
+                )}
               </div>
             </div>
             <StatCard

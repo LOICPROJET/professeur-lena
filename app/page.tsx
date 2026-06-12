@@ -7,6 +7,7 @@ import ResultCards from '@/components/ResultCards'
 import CameraCapture from '@/components/CameraCapture'
 import BottomNav from '@/components/BottomNav'
 import ChildSelector from '@/components/ChildSelector'
+import Link from 'next/link'
 import { CorrectionResultV2, ChildProfile } from '@/lib/types'
 import {
   saveHomework,
@@ -93,6 +94,24 @@ function HomeScreen({
             childCount={childList.length}
             onClick={onOpenSelector}
           />
+        </div>
+      )}
+
+      {/* Soft banner — no level set */}
+      {activeChild && !activeChild.level && (
+        <div className="px-5 pt-2 pb-0">
+          <div className="bg-amber-50 border border-amber-100 rounded-2xl px-4 py-3 flex items-center gap-2.5">
+            <span className="text-base flex-shrink-0">⭐</span>
+            <p className="text-xs font-medium text-amber-800 flex-1 leading-snug">
+              Ajoutez la classe de <span className="font-black">{activeChild.name}</span> pour que Léna corrige comme sa vraie maîtresse.
+            </p>
+            <Link
+              href="/parent"
+              className="text-xs font-black text-amber-700 bg-amber-100 px-2.5 py-1 rounded-xl btn-press flex-shrink-0"
+            >
+              Compléter
+            </Link>
+          </div>
         </div>
       )}
 
