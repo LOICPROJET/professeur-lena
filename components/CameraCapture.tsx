@@ -39,9 +39,9 @@ export default function CameraCapture({ onCapture }: CameraCaptureProps) {
       {/* Main camera button */}
       <button
         onClick={() => cameraInputRef.current?.click()}
-        className="w-full bg-primary-500 text-white font-black text-xl py-5 rounded-3xl shadow-xl shadow-primary-200/60 btn-press flex items-center justify-center gap-3 mb-4"
+        className="w-full text-white font-black text-xl py-5 rounded-full shadow-lumio btn-press flex items-center justify-center gap-3 mb-4"
         style={{
-          background: 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)',
+          background: 'linear-gradient(135deg, #4F7CFF 0%, #7299FF 100%)',
         }}
       >
         <span className="text-2xl">📸</span>
@@ -51,7 +51,7 @@ export default function CameraCapture({ onCapture }: CameraCaptureProps) {
       {/* Gallery option */}
       <button
         onClick={() => galleryInputRef.current?.click()}
-        className="w-full bg-white text-[#8E8E93] font-bold text-base py-4 rounded-2xl border border-gray-100 shadow-sm btn-press flex items-center justify-center gap-2"
+        className="w-full bg-white text-primary-500 font-bold text-base py-4 rounded-full border border-primary-200 shadow-card btn-press flex items-center justify-center gap-2"
       >
         <span>🖼️</span>
         <span>Choisir depuis la galerie</span>

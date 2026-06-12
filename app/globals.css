@@ -1,11 +1,21 @@
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* ─── Design system Lumio ─────────────────────────────────────────────────────
+   Typo : SF Pro Display (système Apple) avec fallback propre partout ailleurs.
+   Palette : Bleu Lumio #4F7CFF · Vert #34C759 · Orange #FF9F0A · Rouge #FF6B6B
+   Fond : #F7F9FC · Carte : #FFFFFF · Texte : #1D1D1F · Secondaire : #4B5563  */
+
 :root {
-  --font-nunito: 'Nunito', ui-rounded, system-ui, sans-serif;
+  --font-app: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text',
+    'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+  --lumio-blue: #4F7CFF;
+  --lumio-green: #34C759;
+  --lumio-orange: #FF9F0A;
+  --lumio-red: #FF6B6B;
+  --lumio-violet: #A78BFA;
+  --app-bg: #F7F9FC;
 }
 
 * {
@@ -15,13 +25,14 @@
 
 html, body {
   overscroll-behavior: none;
-  background-color: #F9FAF8;
+  background-color: var(--app-bg);
 }
 
 body {
-  font-family: var(--font-nunito), ui-rounded, 'Helvetica Neue', sans-serif;
+  font-family: var(--font-app);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  color: #1D1D1F;
 }
 
 /* Smooth scrolling */
@@ -35,7 +46,7 @@ body {
   display: none;
 }
 
-/* Card animation */
+/* ─── Animations cartes ──────────────────────────────────────────────────── */
 @keyframes slideUp {
   from {
     opacity: 0;
@@ -106,3 +117,66 @@ body {
 .dot-1 { animation: dotBounce 1.2s ease-in-out infinite; animation-delay: 0ms; }
 .dot-2 { animation: dotBounce 1.2s ease-in-out infinite; animation-delay: 200ms; }
 .dot-3 { animation: dotBounce 1.2s ease-in-out infinite; animation-delay: 400ms; }
+
+/* ─── Composants UI Lumio ────────────────────────────────────────────────── */
+/* Bouton principal : pill bleu Lumio avec ombre douce */
+.btn-lumio {
+  background: linear-gradient(135deg, #4F7CFF 0%, #7299FF 100%);
+  color: #fff;
+  border-radius: 9999px;
+  box-shadow: 0 8px 24px -6px rgba(79, 124, 255, 0.45);
+}
+
+/* Carte d'information : blanc, coins très arrondis, ombre légère */
+.card-lumio {
+  background: #FFFFFF;
+  border-radius: 1.5rem;
+  border: 1px solid #E5E7EB;
+  box-shadow: 0 2px 12px rgba(29, 29, 31, 0.06);
+}
+
+/* ─── Fond parallax SVG ──────────────────────────────────────────────────── */
+.parallax-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  will-change: transform;
+}
+
+.app-content {
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes floatY {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+
+@keyframes floatYsoft {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-8px) scale(1.04); }
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0.25; }
+  50% { opacity: 0.9; }
+}
+
+.float-a { animation: floatY 7s ease-in-out infinite; }
+.float-b { animation: floatYsoft 5.5s ease-in-out infinite; animation-delay: 0.8s; }
+.float-c { animation: floatY 4.5s ease-in-out infinite; animation-delay: 1.6s; }
+.twinkle-a { animation: twinkle 3.2s ease-in-out infinite; }
+.twinkle-b { animation: twinkle 4.1s ease-in-out infinite; animation-delay: 1.1s; }
+.twinkle-c { animation: twinkle 2.6s ease-in-out infinite; animation-delay: 0.5s; }
+
+/* Respect des préférences d'accessibilité */
+@media (prefers-reduced-motion: reduce) {
+  .float-a, .float-b, .float-c,
+  .twinkle-a, .twinkle-b, .twinkle-c,
+  .parallax-layer {
+    animation: none !important;
+    transform: none !important;
+  }
+}

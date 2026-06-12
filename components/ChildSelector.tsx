@@ -52,7 +52,7 @@ export default function ChildSelector({
 
         {/* Header */}
         <div className="px-6 py-4 flex items-center justify-between">
-          <h2 className="font-black text-lg text-[#1F2937]">Changer d'enfant</h2>
+          <h2 className="font-black text-lg text-[#1D1D1F]">Changer d'enfant</h2>
           <button
             onClick={onClose}
             className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 text-sm font-bold btn-press"
@@ -101,7 +101,7 @@ export default function ChildSelector({
                     {/* Name */}
                     <span
                       className={`text-xs font-black truncate w-full text-center ${
-                        isActive ? 'text-primary-700' : 'text-[#1F2937]'
+                        isActive ? 'text-primary-700' : 'text-[#1D1D1F]'
                       }`}
                     >
                       {child.name}

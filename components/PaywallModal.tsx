@@ -70,7 +70,7 @@ export default function PaywallModal({ type, onClose }: PaywallModalProps) {
         {/* Header */}
         <div className="text-center mb-5">
           <div className="text-5xl mb-3">{c.icon}</div>
-          <h3 className="font-black text-xl text-[#1F2937] mb-1">{c.title}</h3>
+          <h3 className="font-black text-xl text-[#1D1D1F] mb-1">{c.title}</h3>
           <p className="text-sm text-gray-500 leading-snug">{c.subtitle}</p>
         </div>
 
@@ -83,7 +83,7 @@ export default function PaywallModal({ type, onClose }: PaywallModalProps) {
             {c.bullets.map((b, i) => (
               <div key={i} className="flex items-center gap-2">
                 <span className="text-primary-500 font-black text-sm">✓</span>
-                <span className="text-sm font-semibold text-[#1F2937]">{b}</span>
+                <span className="text-sm font-semibold text-[#1D1D1F]">{b}</span>
               </div>
             ))}
           </div>
@@ -98,7 +98,7 @@ export default function PaywallModal({ type, onClose }: PaywallModalProps) {
         <button
           onClick={() => { onClose(); router.push('/premium') }}
           className="w-full py-3.5 rounded-2xl text-white font-black text-base btn-press mb-3"
-          style={{ background: 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)' }}
+          style={{ background: 'linear-gradient(135deg, #4F7CFF 0%, #7299FF 100%)' }}
         >
           ⭐ Passer Premium
         </button>

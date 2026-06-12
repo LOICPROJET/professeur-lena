@@ -119,7 +119,7 @@ export default function PremiumPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F9FAF8] max-w-md mx-auto pb-16">
+    <div className="min-h-screen bg-transparent max-w-md mx-auto pb-16">
       <div className="h-12" />
 
       {/* Header */}
@@ -131,7 +131,7 @@ export default function PremiumPage() {
           <span className="text-gray-500 text-lg">←</span>
         </button>
         <div className="text-5xl mb-3">⭐</div>
-        <h1 className="text-2xl font-black text-[#1F2937]">Professeur Léna Premium</h1>
+        <h1 className="text-2xl font-black text-[#1D1D1F]">Professeur Léna Premium</h1>
         <p className="text-sm text-[#8E8E93] font-medium mt-2 leading-snug">
           Accompagnez votre enfant tout au long de l'année scolaire
         </p>
@@ -175,7 +175,7 @@ export default function PremiumPage() {
 
             {/* Price */}
             <div className="flex items-baseline gap-1 mb-1">
-              <span className="text-3xl font-black text-[#1F2937]">{plan.price}</span>
+              <span className="text-3xl font-black text-[#1D1D1F]">{plan.price}</span>
               <span className="text-sm text-gray-400 font-medium">{plan.priceSub}</span>
             </div>
             {'priceAlt' in plan && plan.priceAlt && (
@@ -187,7 +187,7 @@ export default function PremiumPage() {
               {plan.features.map((f, i) => (
                 <div key={i} className="flex items-center gap-2">
                   <span className="text-green-500 font-black text-sm flex-shrink-0">✓</span>
-                  <span className="text-sm font-semibold text-[#1F2937]">{f}</span>
+                  <span className="text-sm font-semibold text-[#1D1D1F]">{f}</span>
                 </div>
               ))}
               {plan.locked.length > 0 && plan.locked.map((f, i) => (
@@ -210,7 +210,7 @@ export default function PremiumPage() {
                 className="w-full py-3.5 rounded-2xl text-white font-black text-sm btn-press disabled:opacity-60 flex items-center justify-center gap-2"
                 style={{
                   background: plan.highlight
-                    ? 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)'
+                    ? 'linear-gradient(135deg, #4F7CFF 0%, #7299FF 100%)'
                     : 'linear-gradient(135deg, #6B7280 0%, #9CA3AF 100%)',
                 }}
               >
@@ -232,7 +232,7 @@ export default function PremiumPage() {
 
       {/* Comparison table */}
       <div className="px-5 mb-8">
-        <h2 className="text-base font-black text-[#1F2937] mb-3 text-center">Comparaison détaillée</h2>
+        <h2 className="text-base font-black text-[#1D1D1F] mb-3 text-center">Comparaison détaillée</h2>
         <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
           <table className="w-full text-sm">
             <thead>

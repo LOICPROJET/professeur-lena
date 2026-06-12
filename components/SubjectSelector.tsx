@@ -1,5 +1,7 @@
 'use client'
 
+import LenaCharacter from '@/components/LenaCharacter'
+
 interface SubjectSelectorProps {
   onSelect: (subject: string) => void
   onBack: () => void
@@ -27,7 +29,7 @@ export default function SubjectSelector({ onSelect, onBack }: SubjectSelectorPro
         >
           <span className="text-gray-500 text-lg">←</span>
         </button>
-        <h2 className="text-2xl font-black text-[#1F2937]">Quelle matière ? 🎒</h2>
+        <h2 className="text-2xl font-black text-[#1D1D1F]">Quelle matière ? 🎒</h2>
         <p className="mt-1 text-sm text-[#8E8E93] font-medium">
           Choisis la matière de ton devoir
         </p>
@@ -60,9 +62,9 @@ export default function SubjectSelector({ onSelect, onBack }: SubjectSelectorPro
       {/* Encouragement */}
       <div className="px-6 mt-6">
         <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-50 flex items-center gap-3">
-          <span className="text-2xl">👧</span>
-          <p className="text-sm text-[#8E8E93] font-medium leading-snug">
-            Je suis prête à t'aider pour toutes les matières !
+          <span className="flex-shrink-0"><LenaCharacter size="sm" showName={false} /></span>
+          <p className="text-sm text-[#4B5563] font-medium leading-snug">
+            Je suis prêt à t&apos;aider pour toutes les matières !
           </p>
         </div>
       </div>

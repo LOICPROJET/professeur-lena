@@ -38,7 +38,7 @@ function DetailDrawer({ record, onClose }: { record: HomeworkRecord; onClose: ()
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
 
       {/* Sheet */}
-      <div className="absolute bottom-0 left-0 right-0 bg-[#F9FAF8] rounded-t-3xl max-h-[90vh] flex flex-col animate-slide-up">
+      <div className="absolute bottom-0 left-0 right-0 bg-[#F7F9FC] rounded-t-3xl max-h-[90vh] flex flex-col animate-slide-up">
         {/* Handle */}
         <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
           <div className="w-10 h-1 bg-gray-300 rounded-full" />
@@ -48,7 +48,7 @@ function DetailDrawer({ record, onClose }: { record: HomeworkRecord; onClose: ()
         <div className="px-5 pb-4 flex items-center gap-3 flex-shrink-0">
           <div className="text-3xl">{emoji}</div>
           <div className="flex-1">
-            <h3 className="font-black text-lg text-[#1F2937]">{record.subject}</h3>
+            <h3 className="font-black text-lg text-[#1D1D1F]">{record.subject}</h3>
             <p className="text-xs text-[#8E8E93] font-medium">{formatDate(record.date)}</p>
           </div>
           <ScoreBadge score={record.correction.score} size="md" />
@@ -101,7 +101,7 @@ function DetailDrawer({ record, onClose }: { record: HomeworkRecord; onClose: ()
           {/* Encouragement */}
           {record.correction.encouragement && (
             <div className="rounded-2xl p-4 text-white text-sm font-medium leading-snug"
-              style={{ background: 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)' }}>
+              style={{ background: 'linear-gradient(135deg, #4F7CFF 0%, #7299FF 100%)' }}>
               🌟 {record.correction.encouragement}
             </div>
           )}
@@ -133,7 +133,7 @@ function HistoryCard({
         {/* Info */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <span className="font-black text-base text-[#1F2937]">{record.subject}</span>
+            <span className="font-black text-base text-[#1D1D1F]">{record.subject}</span>
           </div>
           <p className="text-xs text-[#8E8E93] font-medium">{formatDate(record.date)}</p>
           {record.correction.parentSummary && (
@@ -177,12 +177,12 @@ function EmptyState() {
   return (
     <div className="flex flex-col items-center justify-center flex-1 px-8 py-16 text-center">
       <div className="text-7xl mb-4">📚</div>
-      <h3 className="text-xl font-black text-[#1F2937] mb-2">Pas encore de devoirs !</h3>
+      <h3 className="text-xl font-black text-[#1D1D1F] mb-2">Pas encore de devoirs !</h3>
       <p className="text-[#8E8E93] font-medium text-sm mb-6 leading-snug">
         Prends ton premier devoir en photo et je vais t'aider à comprendre.
       </p>
       <Link href="/" className="bg-primary-500 text-white font-bold px-6 py-3 rounded-2xl btn-press"
-        style={{ background: 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)' }}>
+        style={{ background: 'linear-gradient(135deg, #4F7CFF 0%, #7299FF 100%)' }}>
         📸 Prendre une photo
       </Link>
     </div>
@@ -225,12 +225,12 @@ export default function HistoryPage() {
   const isFreePlan = getUserPlan() === 'free'
 
   return (
-    <div className="min-h-screen bg-[#F9FAF8] max-w-md mx-auto flex flex-col pb-20">
+    <div className="min-h-screen bg-transparent max-w-md mx-auto flex flex-col pb-20">
       <div className="h-12" />
 
       {/* Header */}
       <div className="px-6 pt-4 pb-4">
-        <h2 className="text-2xl font-black text-[#1F2937]">
+        <h2 className="text-2xl font-black text-[#1D1D1F]">
           {activeChild ? `${activeChild.emoji} ${activeChild.name}` : 'Mes devoirs'} 📚
         </h2>
         <p className="text-sm text-[#8E8E93] font-medium">

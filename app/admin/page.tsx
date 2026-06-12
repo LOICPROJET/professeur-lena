@@ -47,13 +47,13 @@ function StatCard({
   label, value, sub, color = 'violet'
 }: { label: string; value: string; sub?: string; color?: 'violet' | 'orange' | 'green' | 'gray' }) {
   const colors = {
-    violet: 'bg-[#EDE9FE] border-[#DDD6FE]',
+    violet: 'bg-[#DEE8FF] border-[#DDD6FE]',
     orange: 'bg-orange-50 border-orange-200',
     green:  'bg-green-50 border-green-100',
     gray:   'bg-gray-50 border-gray-200',
   }
   const text = {
-    violet: 'text-[#8B5CF6]',
+    violet: 'text-[#4F7CFF]',
     orange: 'text-orange-700',
     green:  'text-green-700',
     gray:   'text-gray-600',
@@ -72,7 +72,7 @@ function PeriodRow({
 }: { label: string; costUsd: number; calls: number; corrections: number; quizGen: number }) {
   return (
     <tr className="border-b border-gray-100 last:border-0">
-      <td className="py-2.5 pr-4 text-sm font-bold text-[#1F2937]">{label}</td>
+      <td className="py-2.5 pr-4 text-sm font-bold text-[#1D1D1F]">{label}</td>
       <td className="py-2.5 pr-4 text-sm font-mono text-orange-700 font-black">{usd(costUsd)}</td>
       <td className="py-2.5 pr-4 text-sm font-mono text-gray-500">{eur(costUsd)}</td>
       <td className="py-2.5 pr-2 text-sm text-center font-medium text-gray-600">{calls}</td>
@@ -99,7 +99,7 @@ function Sparkline({ data }: { data: { date: string; costUsd: number }[] }) {
               isToday
                 ? 'bg-orange-500'
                 : d.costUsd > 0
-                  ? 'bg-[#8B5CF6]'
+                  ? 'bg-[#4F7CFF]'
                   : 'bg-gray-200'
             }`}
           />
@@ -147,10 +147,10 @@ function PinScreen({ onUnlock }: { onUnlock: () => void }) {
       <div className="w-full max-w-sm">
         <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
           <div className="text-center mb-8">
-            <div className="w-16 h-16 bg-[#EDE9FE] rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4">
+            <div className="w-16 h-16 bg-[#DEE8FF] rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4">
               🔐
             </div>
-            <h1 className="text-xl font-black text-[#1F2937]">Admin Analytics</h1>
+            <h1 className="text-xl font-black text-[#1D1D1F]">Admin Analytics</h1>
             <p className="text-sm text-gray-500 mt-1">Professeur Léna</p>
           </div>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -161,7 +161,7 @@ function PinScreen({ onUnlock }: { onUnlock: () => void }) {
               placeholder="Code admin"
               autoFocus
               className="w-full border border-gray-200 rounded-2xl px-4 py-3 text-center text-lg font-mono tracking-widest
-                         focus:outline-none focus:border-[#8B5CF6] focus:ring-2 focus:ring-[#8B5CF6]/20"
+                         focus:outline-none focus:border-[#4F7CFF] focus:ring-2 focus:ring-[#4F7CFF]/20"
             />
             {error && (
               <p className="text-sm text-red-500 text-center font-semibold">{error}</p>
@@ -169,7 +169,7 @@ function PinScreen({ onUnlock }: { onUnlock: () => void }) {
             <button
               type="submit"
               disabled={loading || !pin.trim()}
-              className="w-full bg-[#8B5CF6] text-white font-black py-3 rounded-2xl disabled:opacity-50"
+              className="w-full bg-[#4F7CFF] text-white font-black py-3 rounded-2xl disabled:opacity-50"
             >
               {loading ? 'Vérification…' : 'Accéder →'}
             </button>
@@ -223,7 +223,7 @@ function Dashboard() {
 
   if (!stats) return (
     <div className="min-h-screen flex items-center justify-center">
-      <div className="w-8 h-8 border-4 border-[#8B5CF6] border-t-transparent rounded-full animate-spin" />
+      <div className="w-8 h-8 border-4 border-[#4F7CFF] border-t-transparent rounded-full animate-spin" />
     </div>
   )
 
@@ -235,13 +235,13 @@ function Dashboard() {
       <div className="bg-white border-b border-gray-100 px-6 pt-12 pb-5 sticky top-0 z-10">
         <div className="flex items-center justify-between max-w-2xl mx-auto">
           <div>
-            <p className="text-[11px] font-bold text-[#8B5CF6] uppercase tracking-wide">Admin</p>
-            <h1 className="text-xl font-black text-[#1F2937]">Analytics OpenAI</h1>
+            <p className="text-[11px] font-bold text-[#4F7CFF] uppercase tracking-wide">Admin</p>
+            <h1 className="text-xl font-black text-[#1D1D1F]">Analytics OpenAI</h1>
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={load}
-              className="text-sm text-[#8B5CF6] font-black bg-[#EDE9FE] px-3 py-1.5 rounded-xl"
+              className="text-sm text-[#4F7CFF] font-black bg-[#DEE8FF] px-3 py-1.5 rounded-xl"
             >
               ↻ Refresh
             </button>
@@ -257,7 +257,7 @@ function Dashboard() {
         {!hasData && (
           <div className="bg-blue-50 border border-blue-100 rounded-3xl p-6 text-center">
             <p className="text-3xl mb-2">📊</p>
-            <p className="font-black text-[#1F2937] text-lg">Aucune donnée encore</p>
+            <p className="font-black text-[#1D1D1F] text-lg">Aucune donnée encore</p>
             <p className="text-sm text-gray-500 mt-1">
               Effectue une correction ou un quiz pour commencer le tracking.
             </p>
@@ -267,7 +267,7 @@ function Dashboard() {
         {/* ── Coûts par période ── */}
         <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="px-5 pt-5 pb-3">
-            <h2 className="font-black text-[#1F2937]">Coûts par période</h2>
+            <h2 className="font-black text-[#1D1D1F]">Coûts par période</h2>
             <p className="text-xs text-gray-400 mt-0.5">Tous les appels OpenAI confondus</p>
           </div>
           <div className="overflow-x-auto px-5 pb-5">
@@ -296,7 +296,7 @@ function Dashboard() {
         {hasData && (
           <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-5">
             <div className="flex items-center justify-between mb-3">
-              <h2 className="font-black text-[#1F2937]">Coût / jour — 14j</h2>
+              <h2 className="font-black text-[#1D1D1F]">Coût / jour — 14j</h2>
               <span className="text-xs text-gray-400">🟣 passé · 🟠 auj.</span>
             </div>
             <Sparkline data={stats.dailyCosts} />
@@ -341,7 +341,7 @@ function Dashboard() {
 
         {/* ── Breakdown par route (30j) ── */}
         <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-5">
-          <h2 className="font-black text-[#1F2937] mb-4">Routes — 30 derniers jours</h2>
+          <h2 className="font-black text-[#1D1D1F] mb-4">Routes — 30 derniers jours</h2>
           <div className="space-y-3">
             {(Object.entries(stats.byRoute) as [APIRoute, { calls: number; costUsd: number }][])
               .sort((a, b) => b[1].calls - a[1].calls)
@@ -351,7 +351,7 @@ function Dashboard() {
                 return (
                   <div key={route}>
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm font-bold text-[#1F2937]">
+                      <span className="text-sm font-bold text-[#1D1D1F]">
                         {ROUTE_LABELS[route]}
                       </span>
                       <span className="text-sm font-mono text-orange-700 font-black">
@@ -364,7 +364,7 @@ function Dashboard() {
                     </div>
                     <div className="w-full bg-gray-100 rounded-full h-1.5">
                       <div
-                        className="bg-[#8B5CF6] h-1.5 rounded-full transition-all"
+                        className="bg-[#4F7CFF] h-1.5 rounded-full transition-all"
                         style={{ width: `${barPct}%` }}
                       />
                     </div>
@@ -382,7 +382,7 @@ function Dashboard() {
         <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="px-5 pt-5 pb-3 flex items-center justify-between">
             <div>
-              <h2 className="font-black text-[#1F2937]">🛡️ Rate Limiting</h2>
+              <h2 className="font-black text-[#1D1D1F]">🛡️ Rate Limiting</h2>
               <p className="text-xs text-gray-400 mt-0.5">Compteurs en mémoire — reset au redémarrage serveur</p>
             </div>
             {rlStats && (
@@ -415,7 +415,7 @@ function Dashboard() {
                   return (
                     <div key={route} className="bg-gray-50 border border-gray-100 rounded-2xl p-3">
                       <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wide truncate">{emojiMap[route]}</p>
-                      <p className="text-lg font-black text-[#1F2937]">{c?.blocked ?? 0}<span className="text-xs font-normal text-gray-400">/{total}</span></p>
+                      <p className="text-lg font-black text-[#1D1D1F]">{c?.blocked ?? 0}<span className="text-xs font-normal text-gray-400">/{total}</span></p>
                       <p className="text-[10px] text-gray-400">{blockRate}% bloqué</p>
                     </div>
                   )
@@ -442,9 +442,9 @@ function Dashboard() {
                         ['check-answers',      '✅ Quiz',         50,  150],
                       ] as [string, string, number, number][]).map(([route, label, h, d]) => (
                         <tr key={route} className="border-b border-gray-50 last:border-0">
-                          <td className="py-2 pr-3 font-medium text-[#1F2937]">{label}</td>
-                          <td className="py-2 pr-3 text-center font-mono text-[#8B5CF6] font-bold">{h}</td>
-                          <td className="py-2 pr-3 text-center font-mono text-[#8B5CF6] font-bold">{d}</td>
+                          <td className="py-2 pr-3 font-medium text-[#1D1D1F]">{label}</td>
+                          <td className="py-2 pr-3 text-center font-mono text-[#4F7CFF] font-bold">{h}</td>
+                          <td className="py-2 pr-3 text-center font-mono text-[#4F7CFF] font-bold">{d}</td>
                           <td className="py-2 text-center font-bold text-green-700">{rlStats.byRoute[route]?.allowed ?? 0}</td>
                         </tr>
                       ))}
@@ -506,8 +506,8 @@ function Dashboard() {
         </div>
 
         {/* ── Projection premium ── */}
-        <div className="bg-[#EDE9FE] border border-[#DDD6FE] rounded-3xl p-5">
-          <h2 className="font-black text-[#8B5CF6] mb-3">💡 Projection abonnement</h2>
+        <div className="bg-[#DEE8FF] border border-[#DDD6FE] rounded-3xl p-5">
+          <h2 className="font-black text-[#4F7CFF] mb-3">💡 Projection abonnement</h2>
           <div className="space-y-2">
             {[2.99, 3.99, 4.99, 5.99].map(price => {
               const monthlyApiCostEur = (stats.d30.costUsd / EUR_RATE)
@@ -516,7 +516,7 @@ function Dashboard() {
               return (
                 <div key={price} className="flex items-center justify-between">
                   <span className="text-sm font-bold text-[#6D28D9]">{price.toFixed(2)} €/mois</span>
-                  <span className="text-sm text-[#1F2937]">
+                  <span className="text-sm text-[#1D1D1F]">
                     marge{' '}
                     <strong className={margin > 0 ? 'text-green-700' : 'text-red-600'}>
                       {margin > 0 ? `€${margin.toFixed(2)}` : `−€${Math.abs(margin).toFixed(2)}`}
@@ -528,7 +528,7 @@ function Dashboard() {
               )
             })}
           </div>
-          <p className="text-[10px] text-[#8B5CF6] mt-3 opacity-70">
+          <p className="text-[10px] text-[#4F7CFF] mt-3 opacity-70">
             Basé sur le coût réel des 30 derniers jours · 1 € = ${EUR_RATE}
           </p>
         </div>
@@ -536,7 +536,7 @@ function Dashboard() {
         {/* ── Données brutes ── */}
         <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-5">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="font-black text-[#1F2937]">Exemple de données stockées</h2>
+            <h2 className="font-black text-[#1D1D1F]">Exemple de données stockées</h2>
             <span className="text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded-lg font-mono">
               localStorage: plena-usage-log
             </span>

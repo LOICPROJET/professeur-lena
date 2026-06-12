@@ -43,14 +43,12 @@ function scoreStyle(score: number) {
 function LoadingScreen({ message }: { message: string }) {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen gap-8 px-6 animate-fade-in">
-      <div className="relative">
-        <div className="w-32 h-32 bg-gradient-to-br from-primary-100 to-primary-200 rounded-full flex items-center justify-center shadow-lg animate-pulse-soft">
-          <span className="text-6xl">👧</span>
-        </div>
-        <div className="absolute inset-0 rounded-full border-4 border-primary-300 border-t-primary-500 animate-spin" />
+      <div className="relative w-40 h-40 flex items-center justify-center">
+        <LenaCharacter size="md" mood="analyse" showName={false} />
+        <div className="absolute inset-0 rounded-full border-4 border-primary-100 border-t-primary-500 animate-spin" />
       </div>
       <div className="text-center">
-        <h2 className="text-2xl font-black text-[#1F2937]">{message}</h2>
+        <h2 className="text-2xl font-black text-[#1D1D1F]">{message}</h2>
         <p className="mt-2 text-[#8E8E93] font-medium text-base">Un instant… 🔍</p>
       </div>
     </div>
@@ -66,7 +64,7 @@ function HomeScreen({ onCapture }: { onCapture: (file: File, dataUrl: string) =>
         <div className="flex justify-center mb-3">
           <LenaCharacter size="md" />
         </div>
-        <h1 className="text-3xl font-black text-[#1F2937] leading-tight">Réviser ma leçon</h1>
+        <h1 className="text-3xl font-black text-[#1D1D1F] leading-tight">Réviser ma leçon</h1>
         <p className="mt-2 text-base text-[#8E8E93] font-medium leading-snug">
           Prends ta leçon en photo,<br />
           je vais créer des questions pour toi !
@@ -82,7 +80,7 @@ function HomeScreen({ onCapture }: { onCapture: (file: File, dataUrl: string) =>
           ].map(({ icon, text }) => (
             <div key={text} className="flex items-center gap-3">
               <span className="text-xl w-8 text-center">{icon}</span>
-              <span className="text-sm font-semibold text-[#1F2937]">{text}</span>
+              <span className="text-sm font-semibold text-[#1D1D1F]">{text}</span>
             </div>
           ))}
         </div>
@@ -122,7 +120,7 @@ function QuizScreen({
           <span className="text-gray-500 text-lg">←</span>
         </button>
         <div className="flex-1 min-w-0">
-          <h2 className="text-xl font-black text-[#1F2937] truncate">🧠 {title}</h2>
+          <h2 className="text-xl font-black text-[#1D1D1F] truncate">🧠 {title}</h2>
           <p className="text-xs text-[#8E8E93] font-medium">{answeredCount}/{questions.length} réponses</p>
         </div>
       </div>
@@ -150,14 +148,14 @@ function QuizScreen({
               <span className="w-6 h-6 rounded-full bg-primary-100 text-primary-600 text-xs font-black flex items-center justify-center flex-shrink-0 mt-0.5">
                 {q.id}
               </span>
-              <p className="text-sm font-bold text-[#1F2937] leading-snug flex-1">{q.question}</p>
+              <p className="text-sm font-bold text-[#1D1D1F] leading-snug flex-1">{q.question}</p>
             </div>
             <textarea
               value={answers[q.id] ?? ''}
               onChange={e => setAnswer(q.id, e.target.value)}
               placeholder="Ta réponse ici…"
               rows={2}
-              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-[#1F2937] bg-gray-50 focus:outline-none focus:border-primary-400 focus:bg-white resize-none transition-colors"
+              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-[#1D1D1F] bg-gray-50 focus:outline-none focus:border-primary-400 focus:bg-white resize-none transition-colors"
             />
           </div>
         ))}
@@ -168,7 +166,7 @@ function QuizScreen({
             onClick={() => onSubmit(answers)}
             disabled={!allAnswered}
             className="w-full text-white font-black text-lg py-4 rounded-2xl shadow-lg btn-press flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
-            style={{ background: 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)' }}
+            style={{ background: 'linear-gradient(135deg, #4F7CFF 0%, #7299FF 100%)' }}
           >
             <span>🚀</span>
             <span>{allAnswered ? 'Valider mes réponses' : `Réponds à toutes les questions (${answeredCount}/${questions.length})`}</span>
@@ -213,7 +211,7 @@ function ResultsScreen({
         <button onClick={onNew} className="w-9 h-9 rounded-full bg-white shadow-sm flex items-center justify-center mb-3 btn-press">
           <span className="text-gray-500 text-lg">←</span>
         </button>
-        <h2 className="text-2xl font-black text-[#1F2937]">Résultats 🧠</h2>
+        <h2 className="text-2xl font-black text-[#1D1D1F]">Résultats 🧠</h2>
         <p className="text-sm text-[#8E8E93] font-medium">{title}</p>
       </div>
 
@@ -226,7 +224,7 @@ function ResultsScreen({
             <span className="text-[10px] font-bold opacity-80">/20</span>
           </div>
           <div className="flex-1">
-            <p className="font-black text-lg text-[#1F2937]">{s.label}</p>
+            <p className="font-black text-lg text-[#1D1D1F]">{s.label}</p>
             <p className="text-sm text-[#8E8E93] font-medium">{correct} bonne{correct > 1 ? 's' : ''} réponse{correct > 1 ? 's' : ''} sur {total}</p>
             <div className="mt-2 h-2.5 bg-gray-100 rounded-full overflow-hidden">
               <div className={`h-full ${s.bg} rounded-full transition-all duration-700`}
@@ -255,7 +253,7 @@ function ResultsScreen({
                 style={{ animationDelay: `${(idx + 2) * 80}ms`, borderColor: isCorrect ? '#bbf7d0' : '#fed7aa' }}>
                 <div className={`px-4 pt-3 pb-2 flex items-start gap-2 ${isCorrect ? 'bg-green-50' : 'bg-orange-50'}`}>
                   <span className="text-lg flex-shrink-0 mt-0.5">{isCorrect ? '✅' : '❌'}</span>
-                  <p className="text-sm font-bold text-[#1F2937] flex-1 leading-snug">{q.question}</p>
+                  <p className="text-sm font-bold text-[#1D1D1F] flex-1 leading-snug">{q.question}</p>
                 </div>
                 <div className="px-4 py-3 flex flex-col gap-2">
                   <div>
@@ -279,7 +277,7 @@ function ResultsScreen({
         {/* Encouragement */}
         {result.encouragement && (
           <div className="rounded-3xl p-5 shadow-lg shadow-primary-200/50 animate-slide-up"
-            style={{ animationDelay: `${(questions.length + 3) * 80}ms`, background: 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)' }}>
+            style={{ animationDelay: `${(questions.length + 3) * 80}ms`, background: 'linear-gradient(135deg, #4F7CFF 0%, #7299FF 100%)' }}>
             <div className="flex items-start gap-3">
               <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center text-xl flex-shrink-0">🌟</div>
               <p className="text-white/90 text-sm font-medium leading-snug flex-1">{result.encouragement}</p>
@@ -291,7 +289,7 @@ function ResultsScreen({
         <div className="flex flex-col gap-3 mt-2 mb-4">
           <button onClick={onRetry}
             className="w-full text-white font-black text-lg py-4 rounded-2xl shadow-lg btn-press flex items-center justify-center gap-2"
-            style={{ background: 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)' }}>
+            style={{ background: 'linear-gradient(135deg, #4F7CFF 0%, #7299FF 100%)' }}>
             <span>🔄</span><span>Réessayer cette leçon</span>
           </button>
           <button onClick={onNew}
@@ -405,7 +403,7 @@ export default function RevisePage() {
   }, [])
 
   return (
-    <main className="min-h-screen bg-[#F9FAF8] max-w-md mx-auto relative overflow-x-hidden">
+    <main className="min-h-screen bg-transparent max-w-md mx-auto relative overflow-x-hidden">
       {error && step === 'home' && (
         <div className="mx-6 mt-16 bg-red-50 border border-red-100 rounded-2xl p-4 flex items-start gap-2">
           <span className="text-lg">😅</span>

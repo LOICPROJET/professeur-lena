@@ -46,7 +46,7 @@ function ChildPill({
       className="flex items-center gap-1.5 bg-white rounded-full px-3 py-1.5 shadow-sm border border-gray-100 btn-press"
     >
       <span className="text-base">{active.emoji}</span>
-      <span className="text-sm font-black text-[#1F2937]">{active.name}</span>
+      <span className="text-sm font-black text-[#1D1D1F]">{active.name}</span>
       {active.level && (
         <span className="text-xs text-gray-400 font-medium">{active.level}</span>
       )}
@@ -118,7 +118,7 @@ function HomeScreen({
       )}
 
       <div className="px-6 pt-3 pb-2 text-center">
-        <h1 className="text-3xl font-black text-[#1F2937] leading-tight">
+        <h1 className="text-3xl font-black text-[#1D1D1F] leading-tight">
           Bonjour {name} 👋
         </h1>
         {/* Streak badge — visible uniquement quand la série est active */}
@@ -129,9 +129,9 @@ function HomeScreen({
             </span>
           </div>
         )}
-        <p className="mt-2 text-base text-[#8E8E93] font-medium leading-snug">
-          Prends ton devoir en photo,<br />
-          je vais t'aider à comprendre.
+        <p className="mt-2 text-base text-[#4B5563] font-medium leading-snug">
+          Prêt{activeChild?.emoji === '👧' ? 'e' : ''} à apprendre aujourd&apos;hui ?<br />
+          Prends ton devoir en photo, je t&apos;aide à comprendre.
         </p>
       </div>
 
@@ -176,7 +176,7 @@ function PreviewScreen({
           <span className="text-gray-500 text-lg">←</span>
         </button>
         <div>
-          <h2 className="text-xl font-black text-[#1F2937]">Ton devoir</h2>
+          <h2 className="text-xl font-black text-[#1D1D1F]">Ton devoir</h2>
           <p className="text-xs text-[#8E8E93] font-medium">
             {subjectEmoji[subject] || '✨'} {subject} · Vérifie ta photo
           </p>
@@ -204,14 +204,14 @@ function PreviewScreen({
       <div className="px-6 mt-6 flex flex-col gap-3">
         <button
           onClick={onCorrect}
-          className="w-full text-white font-black text-lg py-4 rounded-2xl shadow-lg shadow-primary-200 btn-press flex items-center justify-center gap-2"
-          style={{ background: 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)' }}
+          className="w-full text-white font-black text-lg py-4 rounded-full shadow-lumio btn-press flex items-center justify-center gap-2"
+          style={{ background: 'linear-gradient(135deg, #4F7CFF 0%, #7299FF 100%)' }}
         >
           <span>🚀</span><span>Corriger mon devoir</span>
         </button>
         <button
           onClick={onRetake}
-          className="w-full bg-white text-[#8E8E93] font-bold text-base py-3.5 rounded-2xl border border-gray-100 shadow-sm btn-press flex items-center justify-center gap-2"
+          className="w-full bg-white text-primary-500 font-bold text-base py-3.5 rounded-full border border-primary-200 shadow-card btn-press flex items-center justify-center gap-2"
         >
           <span>🔄</span><span>Reprendre la photo</span>
         </button>
@@ -226,14 +226,12 @@ function PreviewScreen({
 function LoadingScreen() {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen gap-8 px-6 animate-fade-in">
-      <div className="relative">
-        <div className="w-32 h-32 bg-gradient-to-br from-primary-100 to-primary-200 rounded-full flex items-center justify-center shadow-lg animate-pulse-soft">
-          <span className="text-6xl">👧</span>
-        </div>
-        <div className="absolute inset-0 rounded-full border-4 border-primary-300 border-t-primary-500 animate-spin" />
+      <div className="relative w-40 h-40 flex items-center justify-center">
+        <LenaCharacter size="md" mood="analyse" showName={false} />
+        <div className="absolute inset-0 rounded-full border-4 border-primary-100 border-t-primary-500 animate-spin" />
       </div>
       <div className="text-center">
-        <h2 className="text-2xl font-black text-[#1F2937]">Je regarde<br />ton devoir…</h2>
+        <h2 className="text-2xl font-black text-[#1D1D1F]">Analyse en cours…</h2>
         <p className="mt-2 text-[#8E8E93] font-medium text-base">Je lis attentivement tout 🔍</p>
       </div>
       <div className="flex gap-2">
@@ -414,7 +412,7 @@ export default function Home() {
   }, [])
 
   return (
-    <main className="min-h-screen bg-[#F9FAF8] max-w-md mx-auto relative overflow-x-hidden">
+    <main className="min-h-screen bg-transparent max-w-md mx-auto relative overflow-x-hidden">
       {step === 'home' && (
         <HomeScreen
           onCapture={handlePhotoCapture}

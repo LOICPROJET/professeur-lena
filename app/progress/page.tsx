@@ -52,8 +52,8 @@ function LineChart({ points }: { points: { label: string; score: number }[] }) {
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height: 100 }}>
         <defs>
           <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#8B5CF6" stopOpacity="0.25" />
-            <stop offset="100%" stopColor="#8B5CF6" stopOpacity="0" />
+            <stop offset="0%" stopColor="#4F7CFF" stopOpacity="0.25" />
+            <stop offset="100%" stopColor="#4F7CFF" stopOpacity="0" />
           </linearGradient>
         </defs>
         {/* Grid lines */}
@@ -64,11 +64,11 @@ function LineChart({ points }: { points: { label: string; score: number }[] }) {
         {/* Area fill */}
         <path d={areaD} fill="url(#areaGrad)" />
         {/* Line */}
-        <path d={pathD} fill="none" stroke="#8B5CF6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+        <path d={pathD} fill="none" stroke="#4F7CFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
         {/* Dots */}
         {points.map((p, i) => (
           <circle key={i} cx={x(i)} cy={y(p.score)} r="3.5"
-            fill="white" stroke="#8B5CF6" strokeWidth="2" />
+            fill="white" stroke="#4F7CFF" strokeWidth="2" />
         ))}
       </svg>
       {/* Labels */}
@@ -92,7 +92,7 @@ function SubjectBar({ subject, average, count }: { subject: string; average: num
       <span className="text-xl w-7 flex-shrink-0">{emoji}</span>
       <div className="flex-1">
         <div className="flex justify-between items-baseline mb-1">
-          <span className="text-sm font-bold text-[#1F2937]">{subject}</span>
+          <span className="text-sm font-bold text-[#1D1D1F]">{subject}</span>
           <span className={`text-sm font-black ${c.text}`}>{average}/20</span>
         </div>
         <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
@@ -110,7 +110,7 @@ function StatChip({ icon, value, label }: { icon: string; value: string | number
   return (
     <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex flex-col items-center gap-1 text-center">
       <span className="text-2xl">{icon}</span>
-      <span className="text-xl font-black text-[#1F2937]">{value}</span>
+      <span className="text-xl font-black text-[#1D1D1F]">{value}</span>
       <span className="text-[11px] font-semibold text-[#8E8E93] leading-tight">{label}</span>
     </div>
   )
@@ -128,7 +128,7 @@ function BadgeTile({ badge }: { badge: Badge }) {
       <span className={`text-3xl ${badge.unlocked ? '' : 'grayscale'}`} style={badge.unlocked ? {} : { filter: 'grayscale(1)' }}>
         {badge.emoji}
       </span>
-      <span className={`text-xs font-black leading-tight ${badge.unlocked ? 'text-[#1F2937]' : 'text-gray-400'}`}>
+      <span className={`text-xs font-black leading-tight ${badge.unlocked ? 'text-[#1D1D1F]' : 'text-gray-400'}`}>
         {badge.label}
       </span>
       <span className="text-[10px] text-gray-400 leading-tight">{badge.description}</span>
@@ -156,7 +156,7 @@ export default function ProgressPage() {
   }, [])
 
   if (!loaded) return (
-    <div className="min-h-screen bg-[#F9FAF8] flex items-center justify-center">
+    <div className="min-h-screen bg-transparent flex items-center justify-center">
       <div className="w-8 h-8 border-4 border-primary-300 border-t-primary-500 rounded-full animate-spin" />
     </div>
   )
@@ -198,10 +198,10 @@ export default function ProgressPage() {
 
   // Empty state
   if (!records.length) return (
-    <div className="min-h-screen bg-[#F9FAF8] max-w-md mx-auto flex flex-col pb-24">
+    <div className="min-h-screen bg-transparent max-w-md mx-auto flex flex-col pb-24">
       <div className="h-12" />
       <div className="px-6 pt-4 pb-3">
-        <h1 className="text-2xl font-black text-[#1F2937]">
+        <h1 className="text-2xl font-black text-[#1D1D1F]">
           {activeChild ? `${activeChild.emoji} ${activeChild.name}` : 'Mon Évolution'} 📈
         </h1>
         <p className="text-sm text-[#8E8E93] font-medium mt-1">Tes progrès au fil du temps</p>
@@ -218,7 +218,7 @@ export default function ProgressPage() {
         </div>
         <div className="flex flex-col items-center justify-center px-6 py-8 gap-3">
           <div className="text-6xl">📚</div>
-          <p className="font-bold text-[#1F2937] text-center">Aucun exercice pour l'instant</p>
+          <p className="font-bold text-[#1D1D1F] text-center">Aucun exercice pour l'instant</p>
           <p className="text-sm text-[#8E8E93] text-center">Fais corriger ton premier devoir pour voir tes progrès ici !</p>
         </div>
       </div>
@@ -227,13 +227,13 @@ export default function ProgressPage() {
   )
 
   return (
-    <div className="min-h-screen bg-[#F9FAF8] max-w-md mx-auto pb-24">
+    <div className="min-h-screen bg-transparent max-w-md mx-auto pb-24">
       <div className="h-12" />
 
       {/* Header */}
       <div className="px-6 pt-4 pb-3">
         <div className="flex items-center gap-2 flex-wrap">
-          <h1 className="text-2xl font-black text-[#1F2937]">
+          <h1 className="text-2xl font-black text-[#1D1D1F]">
             {activeChild ? `${activeChild.emoji} ${activeChild.name}` : 'Mon Évolution'} 📈
           </h1>
           {activeChild?.level && (
@@ -283,7 +283,7 @@ export default function ProgressPage() {
             {/* Meilleure série */}
             <div className="text-right">
               <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wide">Meilleure</p>
-              <p className="text-2xl font-black text-[#1F2937]">
+              <p className="text-2xl font-black text-[#1D1D1F]">
                 🏆 {bestStreak}
               </p>
               <p className="text-[11px] text-gray-400 font-medium">{bestStreak === 1 ? 'jour' : 'jours'}</p>
@@ -354,7 +354,7 @@ export default function ProgressPage() {
               </div>
               <div className="bg-gray-50 rounded-xl p-3 text-center">
                 <p className="text-[11px] font-bold text-gray-500">30 jours</p>
-                <p className="font-black text-xl text-[#1F2937]">{progressStats.last30DaysCount}</p>
+                <p className="font-black text-xl text-[#1D1D1F]">{progressStats.last30DaysCount}</p>
                 <p className="text-[11px] text-gray-400">
                   {progressStats.last30DaysAverage > 0 ? `moy. ${progressStats.last30DaysAverage}/20` : 'exercice(s)'}
                 </p>
@@ -378,14 +378,14 @@ export default function ProgressPage() {
 
         {/* Line chart */}
         <div className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100">
-          <h3 className="font-black text-base text-[#1F2937] mb-4">Courbe de progression</h3>
+          <h3 className="font-black text-base text-[#1D1D1F] mb-4">Courbe de progression</h3>
           <LineChart points={last10} />
         </div>
 
         {/* By subject */}
         {subjectStats.length > 0 && (
           <div className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100">
-            <h3 className="font-black text-base text-[#1F2937] mb-4">Par matière</h3>
+            <h3 className="font-black text-base text-[#1D1D1F] mb-4">Par matière</h3>
             <div className="flex flex-col gap-4">
               {subjectStats.map(s => (
                 <SubjectBar key={s.subject} {...s} />
@@ -399,12 +399,12 @@ export default function ProgressPage() {
           <div className="grid grid-cols-2 gap-3">
             <div className="bg-green-50 border border-green-100 rounded-2xl p-4">
               <p className="text-xs font-bold text-green-600 mb-1">💪 Point fort</p>
-              <p className="font-black text-[#1F2937] text-sm">{subjectStats[0].subject}</p>
+              <p className="font-black text-[#1D1D1F] text-sm">{subjectStats[0].subject}</p>
               <p className="text-green-600 font-black">{subjectStats[0].average}/20</p>
             </div>
             <div className="bg-orange-50 border border-orange-100 rounded-2xl p-4">
               <p className="text-xs font-bold text-orange-600 mb-1">📌 À renforcer</p>
-              <p className="font-black text-[#1F2937] text-sm">{subjectStats[subjectStats.length - 1].subject}</p>
+              <p className="font-black text-[#1D1D1F] text-sm">{subjectStats[subjectStats.length - 1].subject}</p>
               <p className="text-orange-600 font-black">{subjectStats[subjectStats.length - 1].average}/20</p>
             </div>
           </div>
@@ -413,7 +413,7 @@ export default function ProgressPage() {
         {/* Badges */}
         <div className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100">
           <div className="flex items-baseline justify-between mb-4">
-            <h3 className="font-black text-base text-[#1F2937]">Mes badges 🏅</h3>
+            <h3 className="font-black text-base text-[#1D1D1F]">Mes badges 🏅</h3>
             <span className="text-xs text-gray-400 font-semibold">
               {badges.filter(b => b.unlocked).length}/{badges.length} débloqués
             </span>

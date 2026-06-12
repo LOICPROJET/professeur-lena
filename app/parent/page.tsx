@@ -98,12 +98,12 @@ function PinScreen({ onUnlock }: { onUnlock: () => void }) {
   const digits = ['1','2','3','4','5','6','7','8','9','','0','⌫']
 
   return (
-    <div className="min-h-screen bg-[#F9FAF8] max-w-md mx-auto flex flex-col items-center justify-center px-8 gap-8">
+    <div className="min-h-screen bg-transparent max-w-md mx-auto flex flex-col items-center justify-center px-8 gap-8">
       <div className="w-20 h-20 rounded-3xl bg-primary-100 flex items-center justify-center text-4xl shadow-sm">
         👨‍👩‍👧
       </div>
       <div className="text-center">
-        <h1 className="text-2xl font-black text-[#1F2937]">Espace Parent</h1>
+        <h1 className="text-2xl font-black text-[#1D1D1F]">Espace Parent</h1>
         <p className="text-sm text-[#8E8E93] font-medium mt-1">Entrez le code à 4 chiffres</p>
         <p className="text-xs text-[#8E8E93] mt-0.5">(Code par défaut : 1234)</p>
       </div>
@@ -136,7 +136,7 @@ function PinScreen({ onUnlock }: { onUnlock: () => void }) {
             </button>
           ) : (
             <button key={i} onClick={() => handleKey(d)}
-              className="h-16 rounded-2xl bg-white border border-gray-100 shadow-sm flex items-center justify-center text-2xl font-black text-[#1F2937] btn-press">
+              className="h-16 rounded-2xl bg-white border border-gray-100 shadow-sm flex items-center justify-center text-2xl font-black text-[#1D1D1F] btn-press">
               {d}
             </button>
           )
@@ -177,7 +177,7 @@ function StatCard({ icon, value, label, sub }: { icon: string; value: string | n
     <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex items-center gap-3">
       <div className="w-12 h-12 bg-primary-50 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0">{icon}</div>
       <div>
-        <div className="font-black text-xl text-[#1F2937]">{value}</div>
+        <div className="font-black text-xl text-[#1D1D1F]">{value}</div>
         <div className="text-xs font-semibold text-[#8E8E93]">{label}</div>
         {sub && <div className="text-xs text-[#8E8E93]">{sub}</div>}
       </div>
@@ -211,7 +211,7 @@ function Section({ icon, title, children }: { icon: string; title: string; child
     <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
       <div className="flex items-center gap-2 mb-3">
         <span className="text-xl">{icon}</span>
-        <h3 className="font-black text-base text-[#1F2937]">{title}</h3>
+        <h3 className="font-black text-base text-[#1D1D1F]">{title}</h3>
       </div>
       {children}
     </div>
@@ -251,7 +251,7 @@ function DeleteModal({
       <div className="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl animate-slide-up">
         <div className="text-center mb-5">
           <div className="text-5xl mb-3">{child.emoji}</div>
-          <h3 className="font-black text-lg text-[#1F2937]">
+          <h3 className="font-black text-lg text-[#1D1D1F]">
             Supprimer {child.name} ?
           </h3>
           <p className="text-sm text-gray-500 mt-2 leading-snug">
@@ -329,7 +329,7 @@ function ChildForm({
         placeholder="Prénom de l'enfant"
         value={name}
         onChange={e => setName(e.target.value)}
-        className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-bold text-[#1F2937] bg-white focus:outline-none focus:border-primary-400"
+        className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-bold text-[#1D1D1F] bg-white focus:outline-none focus:border-primary-400"
         autoFocus
       />
       {/* Age */}
@@ -340,13 +340,13 @@ function ChildForm({
         min="3"
         max="18"
         onChange={e => setAge(e.target.value)}
-        className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm font-bold text-[#1F2937] bg-white focus:outline-none focus:border-primary-400"
+        className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm font-bold text-[#1D1D1F] bg-white focus:outline-none focus:border-primary-400"
       />
 
       {/* Classe — champ visuellement important */}
       <div className="bg-white border border-gray-100 rounded-2xl p-3 flex flex-col gap-2">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-black text-[#1F2937]">Classe de l&apos;enfant</span>
+          <span className="text-xs font-black text-[#1D1D1F]">Classe de l&apos;enfant</span>
           <span className="text-[10px] font-black text-primary-600 bg-primary-50 border border-primary-100 px-2 py-0.5 rounded-full">
             Recommandé
           </span>
@@ -365,7 +365,7 @@ function ChildForm({
                   ? 'text-white shadow-sm'
                   : 'bg-gray-50 border border-gray-200 text-gray-500'
               }`}
-              style={level === l ? { background: 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)' } : undefined}
+              style={level === l ? { background: 'linear-gradient(135deg, #4F7CFF 0%, #7299FF 100%)' } : undefined}
             >
               {l}
             </button>
@@ -386,7 +386,7 @@ function ChildForm({
           onClick={handleSubmit}
           disabled={!name.trim()}
           className="flex-1 py-2.5 rounded-xl text-white font-black text-sm btn-press disabled:opacity-40"
-          style={{ background: 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)' }}
+          style={{ background: 'linear-gradient(135deg, #4F7CFF 0%, #7299FF 100%)' }}
         >
           {isEdit ? '✓ Modifier' : '✓ Enregistrer'}
         </button>
@@ -484,7 +484,7 @@ function ChildrenManager({ onRefresh }: { onRefresh?: () => void }) {
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <span className="text-xl">👨‍👩‍👧</span>
-            <h3 className="font-black text-base text-[#1F2937]">Mes enfants</h3>
+            <h3 className="font-black text-base text-[#1D1D1F]">Mes enfants</h3>
             {userIsPremium && (
               <span className="text-[10px] font-bold text-primary-500 bg-primary-50 border border-primary-100 px-2 py-0.5 rounded-full">
                 PREMIUM
@@ -542,7 +542,7 @@ function ChildrenManager({ onRefresh }: { onRefresh?: () => void }) {
               >
                 <span className="text-2xl">{c.emoji}</span>
                 <div className="flex-1 min-w-0">
-                  <p className="font-black text-sm text-[#1F2937]">{c.name}</p>
+                  <p className="font-black text-sm text-[#1D1D1F]">{c.name}</p>
                   <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
                     {c.age && <span className="text-xs text-gray-400">{c.age} ans</span>}
                     {c.level ? (
@@ -666,7 +666,7 @@ function ProgressSection({
 
   return (
     <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex flex-col gap-4">
-      <h3 className="font-black text-base text-[#1F2937]">📅 Progression de {childName}</h3>
+      <h3 className="font-black text-base text-[#1D1D1F]">📅 Progression de {childName}</h3>
 
       {/* Smart message */}
       {message && (
@@ -697,7 +697,7 @@ function ProgressSection({
         </div>
         <div className="bg-gray-50 border border-gray-100 rounded-xl p-3">
           <p className="text-[11px] font-bold text-gray-500 mb-0.5">30 derniers jours</p>
-          <p className="font-black text-2xl text-[#1F2937] leading-none">{progressStats.last30DaysCount}</p>
+          <p className="font-black text-2xl text-[#1D1D1F] leading-none">{progressStats.last30DaysCount}</p>
           <p className="text-xs text-gray-400 mt-0.5">
             {progressStats.last30DaysAverage > 0
               ? `moy. ${progressStats.last30DaysAverage}/20`
@@ -727,13 +727,13 @@ function ProgressSection({
           {progressStats.mostWorkedSubject && (
             <div className="bg-blue-50 border border-blue-100 rounded-xl p-3">
               <p className="text-[11px] font-bold text-blue-600 mb-1">📚 Plus travaillé</p>
-              <p className="font-black text-sm text-[#1F2937]">{progressStats.mostWorkedSubject}</p>
+              <p className="font-black text-sm text-[#1D1D1F]">{progressStats.mostWorkedSubject}</p>
             </div>
           )}
           {progressStats.bestSubject && (
             <div className="bg-green-50 border border-green-100 rounded-xl p-3">
               <p className="text-[11px] font-bold text-green-600 mb-1">🏆 Point fort</p>
-              <p className="font-black text-sm text-[#1F2937]">{progressStats.bestSubject}</p>
+              <p className="font-black text-sm text-[#1D1D1F]">{progressStats.bestSubject}</p>
             </div>
           )}
         </div>
@@ -771,7 +771,7 @@ function ReportCard({ report }: { report: WeeklyReport }) {
         <div className="flex items-start justify-between mb-3">
           <div>
             <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1">Semaine</p>
-            <p className="text-sm font-bold text-[#1F2937]">{weekRange}</p>
+            <p className="text-sm font-bold text-[#1D1D1F]">{weekRange}</p>
             {report.level && (
               <span className="inline-block text-[10px] font-black text-white bg-primary-500 px-1.5 py-0.5 rounded-md mt-1.5">
                 {report.level}
@@ -780,7 +780,7 @@ function ReportCard({ report }: { report: WeeklyReport }) {
           </div>
           <div className="text-right">
             <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1">Exercices</p>
-            <p className="text-3xl font-black text-[#1F2937]">{report.totalCorrections}</p>
+            <p className="text-3xl font-black text-[#1D1D1F]">{report.totalCorrections}</p>
           </div>
         </div>
         <p className="text-sm text-[#4B5563] leading-relaxed">{report.parentSummary}</p>
@@ -853,7 +853,7 @@ function ReportCard({ report }: { report: WeeklyReport }) {
           </div>
         </div>
       )}
-      <div className="rounded-3xl p-5 text-white" style={{ background: 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)' }}>
+      <div className="rounded-3xl p-5 text-white" style={{ background: 'linear-gradient(135deg, #4F7CFF 0%, #7299FF 100%)' }}>
         <div className="flex items-center gap-2 mb-2">
           <span className="text-xl">🤖</span>
           <p className="font-black text-sm">Recommandation de Léna</p>
@@ -895,7 +895,7 @@ function PastReportItem({ report, onSelect }: { report: WeeklyReport; onSelect: 
         {report.totalCorrections > 0 ? report.averageScore : '–'}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-bold text-[#1F2937]">{weekRange}</p>
+        <p className="text-sm font-bold text-[#1D1D1F]">{weekRange}</p>
         <p className="text-xs text-gray-400 font-medium">
           {report.totalCorrections} exercice{report.totalCorrections !== 1 ? 's' : ''}
           {report.totalCorrections > 0 ? ` · moy. ${report.averageScore}/20` : ''}
@@ -910,7 +910,7 @@ function GenerateCTA({ hwCount, generating, onGenerate }: { hwCount: number; gen
   return (
     <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 text-center">
       <div className="text-5xl mb-3">📋</div>
-      <h3 className="font-black text-lg text-[#1F2937] mb-2">Rapport de la semaine</h3>
+      <h3 className="font-black text-lg text-[#1D1D1F] mb-2">Rapport de la semaine</h3>
       <p className="text-sm text-[#8E8E93] mb-5 leading-snug">
         {hwCount === 0
           ? "Aucun exercice cette semaine. Commencez à corriger des devoirs !"
@@ -920,7 +920,7 @@ function GenerateCTA({ hwCount, generating, onGenerate }: { hwCount: number; gen
         onClick={onGenerate}
         disabled={generating}
         className="text-white font-bold px-6 py-3 rounded-2xl btn-press disabled:opacity-60 inline-flex items-center gap-2"
-        style={{ background: generating ? '#A78BFA' : 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)' }}
+        style={{ background: generating ? '#7299FF' : 'linear-gradient(135deg, #4F7CFF 0%, #7299FF 100%)' }}
       >
         {generating ? (
           <><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />Génération…</>
@@ -995,7 +995,7 @@ function ReportsSection({ activeChild }: { activeChild: ChildProfile }) {
       )}
       {pastReports.length > 0 && !displayReport && (
         <div>
-          <p className="text-sm font-black text-[#1F2937] mb-3">Rapports précédents</p>
+          <p className="text-sm font-black text-[#1D1D1F] mb-3">Rapports précédents</p>
           <div className="flex flex-col gap-2">
             {pastReports.map(r => (
               <PastReportItem key={r.id} report={r} onSelect={() => setSelectedReport(r)} />
@@ -1035,7 +1035,7 @@ function Dashboard({
       <div className="bg-white border-b border-gray-100 px-6 pt-12 pb-4">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-2xl font-black text-[#1F2937]">
+            <h1 className="text-2xl font-black text-[#1D1D1F]">
               Espace parent 👨‍👩‍👧
             </h1>
             <p className="text-sm text-[#8E8E93] font-medium">{childName}</p>
@@ -1219,7 +1219,7 @@ function Dashboard({
                   <div key={r.id} className="flex items-center gap-3 py-1">
                     <span className="text-xl">{emoji}</span>
                     <div className="flex-1">
-                      <span className="font-bold text-sm text-[#1F2937]">{r.subject}</span>
+                      <span className="font-bold text-sm text-[#1D1D1F]">{r.subject}</span>
                       <span className="text-xs text-gray-400 ml-2">
                         {date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
                       </span>
@@ -1241,7 +1241,7 @@ function Dashboard({
         {records.length === 0 && (
           <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 text-center">
             <div className="text-5xl mb-3">📚</div>
-            <p className="font-bold text-[#1F2937] mb-1">Aucun devoir corrigé</p>
+            <p className="font-bold text-[#1D1D1F] mb-1">Aucun devoir corrigé</p>
             <p className="text-sm text-[#8E8E93]">
               Les statistiques de {childName} apparaîtront ici après les premières corrections.
             </p>
@@ -1303,7 +1303,7 @@ export default function ParentPage() {
 
   if (!loaded) {
     return (
-      <div className="min-h-screen bg-[#F9FAF8] flex items-center justify-center">
+      <div className="min-h-screen bg-transparent flex items-center justify-center">
         <div className="w-8 h-8 border-4 border-primary-300 border-t-primary-500 rounded-full animate-spin" />
       </div>
     )
@@ -1312,7 +1312,7 @@ export default function ParentPage() {
   if (!unlocked) return <PinScreen onUnlock={handleUnlock} />
 
   if (!stats || !progressStats) return (
-    <div className="min-h-screen bg-[#F9FAF8] flex items-center justify-center">
+    <div className="min-h-screen bg-transparent flex items-center justify-center">
       <div className="w-8 h-8 border-4 border-primary-300 border-t-primary-500 rounded-full animate-spin" />
     </div>
   )

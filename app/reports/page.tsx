@@ -60,11 +60,11 @@ function ReportCard({ report }: { report: WeeklyReport }) {
         <div className="flex items-start justify-between mb-3">
           <div>
             <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1">Semaine</p>
-            <p className="text-sm font-bold text-[#1F2937]">{formatWeekRange(report.weekStart, report.weekEnd)}</p>
+            <p className="text-sm font-bold text-[#1D1D1F]">{formatWeekRange(report.weekStart, report.weekEnd)}</p>
           </div>
           <div className="text-right">
             <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1">Exercices</p>
-            <p className="text-3xl font-black text-[#1F2937]">{report.totalCorrections}</p>
+            <p className="text-3xl font-black text-[#1D1D1F]">{report.totalCorrections}</p>
           </div>
         </div>
         <p className="text-sm text-[#4B5563] leading-relaxed">{report.parentSummary}</p>
@@ -140,7 +140,7 @@ function ReportCard({ report }: { report: WeeklyReport }) {
       {/* Léna's recommendation */}
       <div
         className="rounded-3xl p-5 text-white"
-        style={{ background: 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)' }}
+        style={{ background: 'linear-gradient(135deg, #4F7CFF 0%, #7299FF 100%)' }}
       >
         <div className="flex items-center gap-2 mb-2">
           <span className="text-xl">🤖</span>
@@ -170,7 +170,7 @@ function PastReportItem({ report, onSelect }: { report: WeeklyReport; onSelect: 
         {report.totalCorrections > 0 ? report.averageScore : '–'}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-bold text-[#1F2937]">{formatWeekRange(report.weekStart, report.weekEnd)}</p>
+        <p className="text-sm font-bold text-[#1D1D1F]">{formatWeekRange(report.weekStart, report.weekEnd)}</p>
         <p className="text-xs text-gray-400 font-medium">
           {report.totalCorrections} exercice{report.totalCorrections !== 1 ? 's' : ''}
           {report.totalCorrections > 0 ? ` · moy. ${report.averageScore}/20` : ''}
@@ -195,7 +195,7 @@ function GenerateCTA({
   return (
     <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 text-center">
       <div className="text-5xl mb-3">📋</div>
-      <h3 className="font-black text-lg text-[#1F2937] mb-2">Rapport de la semaine</h3>
+      <h3 className="font-black text-lg text-[#1D1D1F] mb-2">Rapport de la semaine</h3>
       <p className="text-sm text-[#8E8E93] mb-5 leading-snug">
         {hwCount === 0
           ? "Aucun exercice cette semaine. Commencez à corriger des devoirs !"
@@ -205,7 +205,7 @@ function GenerateCTA({
         onClick={onGenerate}
         disabled={generating}
         className="text-white font-bold px-6 py-3 rounded-2xl btn-press disabled:opacity-60 inline-flex items-center gap-2"
-        style={{ background: generating ? '#A78BFA' : 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)' }}
+        style={{ background: generating ? '#7299FF' : 'linear-gradient(135deg, #4F7CFF 0%, #7299FF 100%)' }}
       >
         {generating ? (
           <>
@@ -275,13 +275,13 @@ export default function ReportsPage() {
   const displayReport = selectedReport ?? null
 
   return (
-    <div className="min-h-screen bg-[#F9FAF8] max-w-md mx-auto flex flex-col pb-24">
+    <div className="min-h-screen bg-transparent max-w-md mx-auto flex flex-col pb-24">
       <div className="h-12" />
 
       {/* Header */}
       <div className="px-6 pt-4 pb-4">
         <div className="flex items-center gap-2 flex-wrap">
-          <h2 className="text-2xl font-black text-[#1F2937]">
+          <h2 className="text-2xl font-black text-[#1D1D1F]">
             {activeChild ? `${activeChild.emoji} ${activeChild.name}` : '📋 Rapports'}
           </h2>
           {activeChild?.level && (
@@ -307,7 +307,7 @@ export default function ReportsPage() {
                     : 'bg-white text-gray-600 border border-gray-200'
                 }`}
                 style={activeChild?.id === child.id
-                  ? { background: 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)' }
+                  ? { background: 'linear-gradient(135deg, #4F7CFF 0%, #7299FF 100%)' }
                   : undefined}
               >
                 <span>{child.emoji}</span>
@@ -372,7 +372,7 @@ export default function ReportsPage() {
             {/* Past reports */}
             {pastReports.length > 0 && !displayReport && (
               <div>
-                <p className="text-sm font-black text-[#1F2937] mb-3">Rapports précédents</p>
+                <p className="text-sm font-black text-[#1D1D1F] mb-3">Rapports précédents</p>
                 <div className="flex flex-col gap-2">
                   {pastReports.map(r => (
                     <PastReportItem

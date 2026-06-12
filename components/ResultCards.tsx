@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import BottomNav from '@/components/BottomNav'
+import LenaCharacter from '@/components/LenaCharacter'
 import { CorrectionResultV2, SUBJECT_EMOJI } from '@/lib/types'
 
 export type { CorrectionResultV2 }
@@ -19,21 +20,34 @@ interface ResultCardsProps {
 
 // ─── Score badge ──────────────────────────────────────────────────────────────
 export function ScoreBadge({ score, size = 'lg' }: { score: number; size?: 'sm' | 'md' | 'lg' }) {
+  // Indicateur circulaire style maquette : anneau de progression + note au centre
   const color =
-    score >= 15 ? 'bg-green-500' :
-    score >= 10 ? 'bg-amber-500' :
-    'bg-red-500'
+    score >= 15 ? '#34C759' :
+    score >= 10 ? '#FF9F0A' :
+    '#FF6B6B'
 
-  const sizes = {
-    sm: 'w-10 h-10 text-sm',
-    md: 'w-14 h-14 text-lg',
-    lg: 'w-20 h-20 text-2xl',
-  }
+  const px = { sm: 40, md: 56, lg: 80 }[size]
+  const text = { sm: 'text-xs', md: 'text-base', lg: 'text-2xl' }[size]
+  const stroke = { sm: 4, md: 5, lg: 6 }[size]
+  const r = (px - stroke) / 2
+  const c = 2 * Math.PI * r
+  const pct = Math.max(0, Math.min(1, score / 20))
 
   return (
-    <div className={`${sizes[size]} ${color} rounded-full flex flex-col items-center justify-center text-white font-black shadow-md flex-shrink-0`}>
-      <span>{score}</span>
-      <span className="text-[9px] font-bold opacity-80 -mt-1">/20</span>
+    <div className="relative flex-shrink-0" style={{ width: px, height: px }}>
+      <svg width={px} height={px} className="-rotate-90">
+        <circle cx={px / 2} cy={px / 2} r={r} fill="#fff" stroke="#EEF1F6" strokeWidth={stroke} />
+        <circle
+          cx={px / 2} cy={px / 2} r={r} fill="none"
+          stroke={color} strokeWidth={stroke} strokeLinecap="round"
+          strokeDasharray={c} strokeDashoffset={c * (1 - pct)}
+          style={{ transition: 'stroke-dashoffset 1s ease' }}
+        />
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <span className={`${text} font-black`} style={{ color }}>{score}</span>
+        {size !== 'sm' && <span className="text-[9px] font-bold text-gray-400 -mt-0.5">/20</span>}
+      </div>
     </div>
   )
 }
@@ -50,7 +64,7 @@ function ScoreBar({ score }: { score: number }) {
         <ScoreBadge score={score} size="lg" />
         <div className="flex-1">
           <div className="flex justify-between items-baseline mb-2">
-            <span className="font-black text-lg text-[#1F2937]">{label}</span>
+            <span className="font-black text-lg text-[#1D1D1F]">{label}</span>
             <span className="text-xs text-[#8E8E93] font-medium">{pct}%</span>
           </div>
           <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
@@ -96,7 +110,7 @@ function LenaMessage({ level }: { level?: string }) {
             {message}
           </p>
         </div>
-        <div className="text-3xl flex-shrink-0 select-none">👧</div>
+        <div className="flex-shrink-0 select-none"><LenaCharacter size="sm" showName={false} /></div>
       </div>
     </div>
   )
@@ -142,7 +156,7 @@ function ResultCard({ icon, title, content, bgColor, borderColor, iconBg, titleC
       {isOpen && (
         <div className="px-4 pb-4 pt-0">
           <div className="h-px bg-black/5 mb-3" />
-          <p className="text-[#1F2937] text-sm font-medium leading-relaxed whitespace-pre-line">{content}</p>
+          <p className="text-[#1D1D1F] text-sm font-medium leading-relaxed whitespace-pre-line">{content}</p>
           {extra}
         </div>
       )}
@@ -158,7 +172,7 @@ function BravoBanner({ content, childName }: { content: string; childName?: stri
 
   return (
     <div className="rounded-3xl p-5 shadow-lg shadow-primary-200/50 animate-slide-up"
-      style={{ animationDelay: '480ms', background: 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)' }}>
+      style={{ animationDelay: '480ms', background: 'linear-gradient(135deg, #4F7CFF 0%, #7299FF 100%)' }}>
       <div className="flex items-start gap-3">
         <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0">🌟</div>
         <div className="flex-1">
@@ -167,7 +181,9 @@ function BravoBanner({ content, childName }: { content: string; childName?: stri
         </div>
       </div>
       <div className="flex justify-end mt-3">
-        <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center text-2xl">👧</div>
+        <div className="w-14 h-14 bg-white/20 rounded-full flex items-center justify-center">
+          <LenaCharacter size="sm" mood="felicitations" showName={false} />
+        </div>
       </div>
     </div>
   )
@@ -223,7 +239,7 @@ export default function ResultCards({ result, subject, onNew, childName, childLe
         </button>
         <div className="flex items-center gap-2 mb-0.5">
           <span className="text-2xl">⭐</span>
-          <h2 className="text-2xl font-black text-[#1F2937]">Super, j'ai corrigé !</h2>
+          <h2 className="text-2xl font-black text-[#1D1D1F]">Super, j'ai corrigé !</h2>
         </div>
         <p className="text-sm text-[#8E8E93] font-medium">
           {emoji} {subject} · Regarde, je t'explique tout 😊
@@ -254,7 +270,7 @@ export default function ResultCards({ result, subject, onNew, childName, childLe
       <div className="px-6 mt-6 flex flex-col gap-3">
         <button onClick={onNew}
           className="w-full text-white font-black text-lg py-4 rounded-2xl shadow-lg btn-press flex items-center justify-center gap-2"
-          style={{ background: 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)' }}>
+          style={{ background: 'linear-gradient(135deg, #4F7CFF 0%, #7299FF 100%)' }}>
           <span>📸</span><span>Nouveau devoir</span>
         </button>
         <Link href="/history"
