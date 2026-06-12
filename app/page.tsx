@@ -242,13 +242,8 @@ export default function Home() {
           </div>
         )}
 
-        {/* Avatar enfant + mascotte Lumio côte à côte (façon maquette) */}
-        <div className="flex justify-center items-end gap-4 mt-5 mb-2">
-          {activeChild && (
-            <div className="w-20 h-20 rounded-full bg-white shadow-card border border-app-border flex items-center justify-center text-4xl">
-              {activeChild.emoji}
-            </div>
-          )}
+        {/* Mascotte Lumio — pose "coucou" */}
+        <div className="flex justify-center mt-4 mb-2">
           <LenaCharacter size="md" showName={false} />
         </div>
 
