@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import BottomNav from '@/components/BottomNav'
 import CameraCapture from '@/components/CameraCapture'
 import SubjectSelector from '@/components/SubjectSelector'
 import { QuizQuestion, QuizResult } from '@/lib/types'
+import { getOrCreateActiveChild } from '@/lib/storage'
 
 type Step = 'home' | 'subject' | 'loading-questions' | 'quiz' | 'loading-check' | 'results'
 
@@ -309,6 +310,13 @@ export default function RevisePage() {
   const [answers, setAnswers] = useState<Record<number, string>>({})
   const [result, setResult] = useState<QuizResult | null>(null)
   const [error, setError] = useState('')
+  // Niveau scolaire de l'enfant actif — variable pédagogique centrale
+  const [childLevel, setChildLevel] = useState<string>('CM1')
+
+  useEffect(() => {
+    const child = getOrCreateActiveChild()
+    setChildLevel(child.level ?? 'CM1')
+  }, [])
 
   const handleCapture = useCallback((_file: File, dataUrl: string) => {
     setImageData(dataUrl)
@@ -325,6 +333,7 @@ export default function RevisePage() {
       const formData = new FormData()
       formData.append('image', resized, 'lesson.jpg')
       formData.append('subject', selectedSubject)
+      formData.append('level', childLevel)
 
       const res = await fetch('/api/generate-questions', { method: 'POST', body: formData })
       const data = await res.json()
@@ -337,7 +346,7 @@ export default function RevisePage() {
       setError("Je n'arrive pas à lire la leçon. Reprends la photo.")
       setStep('home')
     }
-  }, [imageData])
+  }, [imageData, childLevel])
 
   const handleSubmit = useCallback(async (submittedAnswers: Record<number, string>) => {
     setAnswers(submittedAnswers)
@@ -347,7 +356,7 @@ export default function RevisePage() {
       const res = await fetch('/api/check-answers', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, questions, answers: submittedAnswers }),
+        body: JSON.stringify({ title, questions, answers: submittedAnswers, level: childLevel }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Erreur')
@@ -358,7 +367,7 @@ export default function RevisePage() {
       setError('Impossible de corriger. Réessaie !')
       setStep('quiz')
     }
-  }, [title, questions])
+  }, [title, questions, childLevel])
 
   const handleRetry = useCallback(() => {
     setAnswers({})

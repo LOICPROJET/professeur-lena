@@ -295,6 +295,9 @@ export default function Home() {
       const formData = new FormData()
       formData.append('image', resizedBlob, 'homework.jpg')
       formData.append('subject', subject)
+      // Niveau scolaire — variable pédagogique centrale
+      // Fallback CM1 si le parent n'a pas renseigné la classe (préserve le comportement actuel)
+      formData.append('level', targetChild.level ?? 'CM1')
 
       const response = await fetch('/api/correct-homework', { method: 'POST', body: formData })
       if (!response.ok) {

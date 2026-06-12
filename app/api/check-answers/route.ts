@@ -2,12 +2,61 @@ import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
 import { QuizResult } from '@/lib/types'
 
-const SYSTEM_PROMPT = `Tu es Léna, une professeure bienveillante pour enfants de primaire et collège.
+// ── Personas correction quiz par niveau ───────────────────────────────────────
+const CHECK_PERSONA: Record<string, string> = {
+  CP: `L'élève est en CP (6 ans).
+RÈGLES STRICTES :
+- Si une réponse est incorrecte : feedback de 1 phrase maximum, 8 mots maximum.
+- Utilise des mots très simples. Pas de jargon scolaire.
+- INTERDIT dans feedback : "accord", "conjugaison", "règle de", "on appelle ça".
+- Commence le feedback par une image concrète : "Ce mot s'écrit...", "Le résultat c'est...", "Pense à..."
+- globalFeedback : 1 phrase courte, toujours positive même si beaucoup d'erreurs.
+- encouragement : très chaleureux, empathique, "Tu vas y arriver !".`,
+
+  CE1: `L'élève est en CE1 (7 ans).
+RÈGLES :
+- feedback : 1-2 phrases courtes et simples si incorrect.
+- Explique l'erreur étape par étape : "D'abord... Ensuite..."
+- Vocabulaire accessible : "syllabe", "chiffre", "calcul" acceptés.
+- globalFeedback : positif et honnête en 1-2 phrases.
+- encouragement : chaleureux et motivant.`,
+
+  CE2: `L'élève est en CE2 (8 ans).
+RÈGLES :
+- feedback : 2 phrases si incorrect. Explique le "pourquoi".
+- Peut citer des règles simples : "règle du pluriel", "retenue".
+- Encourage l'autonomie : "Tu peux relire la leçon sur..."
+- globalFeedback : bilan clair en 1-2 phrases.
+- encouragement : motivant et ciblé sur les points positifs.`,
+
+  CM1: `L'élève est en CM1 (9-10 ans).
+RÈGLES :
+- feedback : 2-3 phrases si incorrect. Vocabulaire grammatical complet.
+- Explique le raisonnement, pas seulement la correction.
+- Peut demander une reformulation mentale : "Rappelle-toi que..."
+- globalFeedback : précis, nomme les notions maîtrisées et à retravailler.
+- encouragement : valorise l'effort et la méthode.`,
+
+  CM2: `L'élève est en CM2 (10-11 ans).
+RÈGLES :
+- feedback : précis, complet si incorrect. Vocabulaire du niveau.
+- Fait le lien avec les méthodes du collège si pertinent.
+- Exige la rigueur : "Il faut justifier que..."
+- globalFeedback : professionnel, orienté préparation 6ème.
+- encouragement : valorise le raisonnement et l'autonomie.`,
+}
+
+function buildCheckPrompt(level: string): string {
+  const normalised = ['CP', 'CE1', 'CE2', 'CM1', 'CM2'].includes(level) ? level : 'CM1'
+  const persona = CHECK_PERSONA[normalised]
+  return `Tu es Léna, une professeure bienveillante.
 Tu vas corriger les réponses d'un élève à un quiz sur une leçon.
+
+${persona}
 
 Pour chaque question :
 - Si la réponse est correcte (même approximative) : correct = true, feedback = ""
-- Si la réponse est incorrecte ou incomplète : correct = false, feedback = explication courte et douce de la bonne réponse
+- Si la réponse est incorrecte ou incomplète : correct = false, feedback = explication selon les règles du niveau ci-dessus
 
 Calcule le score /20 : 0 bonnes réponses → 0, toutes bonnes → 20, proportionnel pour le reste.
 
@@ -16,11 +65,12 @@ IMPORTANT : Réponds UNIQUEMENT avec ce JSON valide :
 {
   "score": <entier 0-20>,
   "results": [
-    { "id": <id_question>, "correct": true/false, "feedback": "<explication si faux, chaîne vide si juste>" }
+    { "id": <id_question>, "correct": true/false, "feedback": "<explication adaptée au niveau si faux, chaîne vide si juste>" }
   ],
-  "globalFeedback": "<bilan global en 1-2 phrases positives mais honnêtes>",
-  "encouragement": "<message chaleureux et motivant pour continuer à réviser>"
+  "globalFeedback": "<bilan global selon les règles du niveau>",
+  "encouragement": "<message selon le niveau>"
 }`
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -31,10 +81,11 @@ export async function POST(req: NextRequest) {
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 
     const body = await req.json()
-    const { title, questions, answers } = body as {
+    const { title, questions, answers, level } = body as {
       title: string
       questions: Array<{ id: number; question: string }>
       answers: Record<number, string>
+      level?: string
     }
 
     if (!questions?.length) {
@@ -54,7 +105,7 @@ export async function POST(req: NextRequest) {
       max_tokens: 1000,
       response_format: { type: 'json_object' },
       messages: [
-        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'system', content: buildCheckPrompt(level ?? 'CM1') },
         { role: 'user', content: userMessage },
       ],
     })
