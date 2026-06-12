@@ -4,7 +4,26 @@ import { useState, useEffect, useCallback } from 'react'
 import { getCostStats, getUsageRecords, type CostStats, type APIRoute } from '@/lib/openai-costs'
 
 // ─── Auth ─────────────────────────────────────────────────────────────────────
-const SESSION_KEY = 'plena-admin-session'
+const SESSION_KEY    = 'plena-admin-session'
+const SESSION_PIN_KEY = 'plena-admin-pin'
+
+// ─── Rate limit stats type (client-side mirror — pas d'import server) ─────────
+interface RLAbuseEvent {
+  timestamp: number
+  identifier: string
+  route: string
+  limitType: 'hourly' | 'daily'
+  count: number
+  limit: number
+}
+interface RLStats {
+  totalBlocked: number
+  byRoute: Record<string, { blocked: number; allowed: number }>
+  recentEvents: RLAbuseEvent[]
+  topAbusers: { identifier: string; count: number }[]
+  uptimeMs: number
+  storeSize: number
+}
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const EUR_RATE = 1.09   // 1 EUR = $1.09 — update as needed
@@ -110,6 +129,7 @@ function PinScreen({ onUnlock }: { onUnlock: () => void }) {
       const data = await res.json()
       if (data.valid) {
         sessionStorage.setItem(SESSION_KEY, '1')
+        sessionStorage.setItem(SESSION_PIN_KEY, pin.trim())  // used for rate-limit-stats API
         onUnlock()
       } else {
         setError('Code incorrect')
@@ -165,15 +185,33 @@ function PinScreen({ onUnlock }: { onUnlock: () => void }) {
 
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 function Dashboard() {
-  const [stats, setStats] = useState<CostStats | null>(null)
+  const [stats, setStats]         = useState<CostStats | null>(null)
+  const [rlStats, setRlStats]     = useState<RLStats | null>(null)
+  const [rlError, setRlError]     = useState<string | null>(null)
   const [recordCount, setRecordCount] = useState(0)
   const [refreshed, setRefreshed] = useState(new Date())
+
+  const loadRLStats = useCallback(async () => {
+    try {
+      const pin = sessionStorage.getItem(SESSION_PIN_KEY) ?? ''
+      const res = await fetch('/api/rate-limit-stats', {
+        headers: { Authorization: `Bearer ${pin}` },
+      })
+      if (!res.ok) { setRlError('Non autorisé ou serveur indisponible'); return }
+      const data: RLStats = await res.json()
+      setRlStats(data)
+      setRlError(null)
+    } catch {
+      setRlError('Impossible de récupérer les stats (hors ligne ?)')
+    }
+  }, [])
 
   const load = useCallback(() => {
     setStats(getCostStats())
     setRecordCount(getUsageRecords(90).length)
     setRefreshed(new Date())
-  }, [])
+    void loadRLStats()
+  }, [loadRLStats])
 
   useEffect(() => { load() }, [load])
 
@@ -338,6 +376,133 @@ function Dashboard() {
               <strong>{stats.topRoute !== '—' ? ROUTE_LABELS[stats.topRoute as APIRoute] ?? stats.topRoute : '—'}</strong>
             </p>
           </div>
+        </div>
+
+        {/* ── Rate Limiting ── */}
+        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="px-5 pt-5 pb-3 flex items-center justify-between">
+            <div>
+              <h2 className="font-black text-[#1F2937]">🛡️ Rate Limiting</h2>
+              <p className="text-xs text-gray-400 mt-0.5">Compteurs en mémoire — reset au redémarrage serveur</p>
+            </div>
+            {rlStats && (
+              <span className="text-[10px] font-mono bg-gray-100 text-gray-500 px-2 py-1 rounded-lg">
+                uptime {Math.floor(rlStats.uptimeMs / 60000)}m · {rlStats.storeSize} clés
+              </span>
+            )}
+          </div>
+
+          {rlError && (
+            <div className="mx-5 mb-4 bg-yellow-50 border border-yellow-200 rounded-2xl px-4 py-3">
+              <p className="text-xs text-yellow-700 font-semibold">⚠️ {rlError}</p>
+              <p className="text-[10px] text-yellow-600 mt-0.5">Les stats sont serveur-side — disponibles uniquement en production.</p>
+            </div>
+          )}
+
+          {rlStats && (
+            <div className="px-5 pb-5 space-y-4">
+              {/* Total bloqué */}
+              <div className="grid grid-cols-3 gap-3">
+                <div className="bg-red-50 border border-red-100 rounded-2xl p-3 text-center">
+                  <p className="text-[10px] font-bold text-red-500 uppercase tracking-wide">Total bloqué</p>
+                  <p className="text-2xl font-black text-red-700">{rlStats.totalBlocked}</p>
+                </div>
+                {(['correct-homework', 'generate-questions', 'check-answers'] as const).map(route => {
+                  const c = rlStats.byRoute[route]
+                  const emojiMap: Record<string, string> = { 'correct-homework': '📝', 'generate-questions': '🧠', 'check-answers': '✅' }
+                  const total = (c?.blocked ?? 0) + (c?.allowed ?? 0)
+                  const blockRate = total > 0 ? Math.round(((c?.blocked ?? 0) / total) * 100) : 0
+                  return (
+                    <div key={route} className="bg-gray-50 border border-gray-100 rounded-2xl p-3">
+                      <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wide truncate">{emojiMap[route]}</p>
+                      <p className="text-lg font-black text-[#1F2937]">{c?.blocked ?? 0}<span className="text-xs font-normal text-gray-400">/{total}</span></p>
+                      <p className="text-[10px] text-gray-400">{blockRate}% bloqué</p>
+                    </div>
+                  )
+                })}
+              </div>
+
+              {/* Limites configurées */}
+              <div>
+                <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wide mb-2">Limites actives (tier FREE)</p>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="text-[10px] text-gray-400 uppercase border-b border-gray-100">
+                        <th className="pb-1.5 text-left pr-3">Route</th>
+                        <th className="pb-1.5 text-center pr-3">/ heure</th>
+                        <th className="pb-1.5 text-center pr-3">/ jour</th>
+                        <th className="pb-1.5 text-center">Autorisés</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {([
+                        ['correct-homework',   '📝 Correction',  30,  100],
+                        ['generate-questions', '🧠 Génération',  20,  50 ],
+                        ['check-answers',      '✅ Quiz',         50,  150],
+                      ] as [string, string, number, number][]).map(([route, label, h, d]) => (
+                        <tr key={route} className="border-b border-gray-50 last:border-0">
+                          <td className="py-2 pr-3 font-medium text-[#1F2937]">{label}</td>
+                          <td className="py-2 pr-3 text-center font-mono text-[#8B5CF6] font-bold">{h}</td>
+                          <td className="py-2 pr-3 text-center font-mono text-[#8B5CF6] font-bold">{d}</td>
+                          <td className="py-2 text-center font-bold text-green-700">{rlStats.byRoute[route]?.allowed ?? 0}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Top abusers */}
+              {rlStats.topAbusers.length > 0 && (
+                <div>
+                  <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wide mb-2">Top abuseurs (IP masquée)</p>
+                  <div className="space-y-1.5">
+                    {rlStats.topAbusers.map((a, i) => (
+                      <div key={i} className="flex items-center justify-between bg-orange-50 rounded-xl px-3 py-2">
+                        <span className="text-[11px] font-mono text-orange-800">{a.identifier}</span>
+                        <span className="text-[11px] font-black text-orange-700">{a.count} block{a.count > 1 ? 's' : ''}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Derniers événements */}
+              {rlStats.recentEvents.length > 0 ? (
+                <div>
+                  <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wide mb-2">
+                    Dernières limites atteintes ({rlStats.recentEvents.length})
+                  </p>
+                  <div className="space-y-1.5 max-h-48 overflow-y-auto">
+                    {rlStats.recentEvents.map((ev, i) => {
+                      const emojiMap: Record<string, string> = { 'correct-homework': '📝', 'generate-questions': '🧠', 'check-answers': '✅' }
+                      const time = new Date(ev.timestamp).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+                      const day  = new Date(ev.timestamp).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })
+                      return (
+                        <div key={i} className="flex items-center gap-2 text-[11px] bg-gray-50 rounded-xl px-3 py-2">
+                          <span>{emojiMap[ev.route] ?? '?'}</span>
+                          <span className="font-mono text-gray-500">{day} {time}</span>
+                          <span className="flex-1 font-mono text-gray-600 truncate">{ev.identifier}</span>
+                          <span className={`font-black px-1.5 py-0.5 rounded-md text-[10px] ${
+                            ev.limitType === 'hourly' ? 'bg-orange-100 text-orange-700' : 'bg-red-100 text-red-700'
+                          }`}>
+                            {ev.limitType === 'hourly' ? 'horaire' : 'jour'} {ev.count}/{ev.limit}
+                          </span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-4">
+                  <p className="text-2xl mb-1">✅</p>
+                  <p className="text-sm font-bold text-green-700">Aucun abus détecté</p>
+                  <p className="text-xs text-gray-400">Les limites n'ont pas encore été déclenchées.</p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* ── Projection premium ── */}

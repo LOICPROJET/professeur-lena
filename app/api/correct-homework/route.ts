@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
 import { CorrectionResultV2 } from '@/lib/types'
 import { estimateCost, type UsageMeta } from '@/lib/openai-costs'
+import { extractIdentifier, checkRateLimit, recordUsage, recordBlock, BASE_LIMITS } from '@/lib/rate-limit-redis'
 
 const ROUTE_MODEL = 'gpt-4o' as const
 
@@ -194,6 +195,21 @@ function fallbackResult(rawText: string): CorrectionResultV2 {
 
 export async function POST(req: NextRequest) {
   try {
+    // ── Rate limiting — vérification AVANT tout traitement ────────────────────
+    const identifier = extractIdentifier(req)
+    const rl = await checkRateLimit(identifier, 'correct-homework')
+    if (!rl.allowed) {
+      const cfg = BASE_LIMITS['correct-homework']
+      const lt  = rl.limitType ?? 'hourly'
+      const lim = lt === 'daily' ? cfg.dailyLimit : cfg.hourlyLimit
+      const cnt = lim - (lt === 'daily' ? rl.remaining.daily : rl.remaining.hourly)
+      recordBlock(identifier, 'correct-homework', lt, cnt, lim)
+      return NextResponse.json(
+        { error: 'rate_limit_exceeded', message: 'Tu as atteint la limite temporaire. Réessaie dans quelques minutes.' },
+        { status: 429 }
+      )
+    }
+
     if (!process.env.OPENAI_API_KEY) {
       return NextResponse.json(
         { error: 'Clé API OpenAI manquante. Configure OPENAI_API_KEY dans .env.local' },
@@ -262,6 +278,9 @@ export async function POST(req: NextRequest) {
       console.warn('JSON parse failed, using fallback:', parseErr)
       result = fallbackResult(rawText)
     }
+
+    // ── Rate limit — incrémenter après succès (no-op en mode Redis) ──────────
+    await recordUsage(identifier, 'correct-homework')
 
     // ── Usage tracking — best-effort, never blocks the response ──────────────
     const usageRaw = response.usage

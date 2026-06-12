@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
 import { QuizQuestion } from '@/lib/types'
 import { estimateCost, type UsageMeta } from '@/lib/openai-costs'
+import { extractIdentifier, checkRateLimit, recordUsage, recordBlock, BASE_LIMITS } from '@/lib/rate-limit-redis'
 
 const ROUTE_MODEL = 'gpt-4o' as const
 
@@ -70,6 +71,21 @@ IMPORTANT : Réponds UNIQUEMENT avec ce JSON valide, rien d'autre :
 
 export async function POST(req: NextRequest) {
   try {
+    // ── Rate limiting ─────────────────────────────────────────────────────────
+    const identifier = extractIdentifier(req)
+    const rl = await checkRateLimit(identifier, 'generate-questions')
+    if (!rl.allowed) {
+      const cfg = BASE_LIMITS['generate-questions']
+      const lt  = rl.limitType ?? 'hourly'
+      const lim = lt === 'daily' ? cfg.dailyLimit : cfg.hourlyLimit
+      const cnt = lim - (lt === 'daily' ? rl.remaining.daily : rl.remaining.hourly)
+      recordBlock(identifier, 'generate-questions', lt, cnt, lim)
+      return NextResponse.json(
+        { error: 'rate_limit_exceeded', message: 'Tu as atteint la limite temporaire. Réessaie dans quelques minutes.' },
+        { status: 429 }
+      )
+    }
+
     if (!process.env.OPENAI_API_KEY) {
       return NextResponse.json({ error: 'Clé API manquante' }, { status: 500 })
     }
@@ -121,6 +137,9 @@ export async function POST(req: NextRequest) {
       : []
 
     if (!questions.length) return NextResponse.json({ error: 'Impossible de lire la leçon.' }, { status: 500 })
+
+    // ── Rate limit — incrémenter après succès (no-op en mode Redis) ──────────
+    await recordUsage(identifier, 'generate-questions')
 
     // ── Usage tracking — best-effort ──────────────────────────────────────────
     const usageRaw = response.usage

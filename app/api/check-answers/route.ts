@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
 import { QuizResult } from '@/lib/types'
 import { estimateCost, type UsageMeta } from '@/lib/openai-costs'
+import { extractIdentifier, checkRateLimit, recordUsage, recordBlock, BASE_LIMITS } from '@/lib/rate-limit-redis'
 
 const ROUTE_MODEL = 'gpt-4o' as const
 
@@ -77,6 +78,21 @@ IMPORTANT : Réponds UNIQUEMENT avec ce JSON valide :
 
 export async function POST(req: NextRequest) {
   try {
+    // ── Rate limiting ─────────────────────────────────────────────────────────
+    const identifier = extractIdentifier(req)
+    const rl = await checkRateLimit(identifier, 'check-answers')
+    if (!rl.allowed) {
+      const cfg = BASE_LIMITS['check-answers']
+      const lt  = rl.limitType ?? 'hourly'
+      const lim = lt === 'daily' ? cfg.dailyLimit : cfg.hourlyLimit
+      const cnt = lim - (lt === 'daily' ? rl.remaining.daily : rl.remaining.hourly)
+      recordBlock(identifier, 'check-answers', lt, cnt, lim)
+      return NextResponse.json(
+        { error: 'rate_limit_exceeded', message: 'Tu as atteint la limite temporaire. Réessaie dans quelques minutes.' },
+        { status: 429 }
+      )
+    }
+
     if (!process.env.OPENAI_API_KEY) {
       return NextResponse.json({ error: 'Clé API manquante' }, { status: 500 })
     }
@@ -134,6 +150,9 @@ export async function POST(req: NextRequest) {
       globalFeedback: typeof data.globalFeedback === 'string' ? data.globalFeedback : '',
       encouragement: typeof data.encouragement === 'string' ? data.encouragement : 'Continue comme ça ! 🌟',
     }
+
+    // ── Rate limit — incrémenter après succès (no-op en mode Redis) ──────────
+    await recordUsage(identifier, 'check-answers')
 
     // ── Usage tracking — best-effort ──────────────────────────────────────────
     const usageRaw = response.usage
