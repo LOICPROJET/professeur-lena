@@ -807,6 +807,16 @@ function Dashboard({
           </div>
         )}
 
+        {/* Pedagogical reassurance */}
+        {activeChild?.level && (
+          <div className="bg-primary-50 border border-primary-100 rounded-2xl px-4 py-3 flex items-center gap-2">
+            <span className="text-base flex-shrink-0">🎯</span>
+            <p className="text-xs font-semibold text-primary-700 leading-snug">
+              Les corrections sont personnalisées selon la classe de votre enfant.
+            </p>
+          </div>
+        )}
+
         {/* Global stats row */}
         <div className="grid grid-cols-2 gap-3">
           <StatCard icon="📝" value={stats.total} label="Devoirs corrigés" />

@@ -100,16 +100,16 @@ function HomeScreen({
       {/* Soft banner — no level set */}
       {activeChild && !activeChild.level && (
         <div className="px-5 pt-2 pb-0">
-          <div className="bg-amber-50 border border-amber-100 rounded-2xl px-4 py-3 flex items-center gap-2.5">
+          <div className="bg-primary-50 border border-primary-100 rounded-2xl px-4 py-3 flex items-center gap-2.5">
             <span className="text-base flex-shrink-0">⭐</span>
-            <p className="text-xs font-medium text-amber-800 flex-1 leading-snug">
-              Ajoutez la classe de <span className="font-black">{activeChild.name}</span> pour que Léna corrige comme sa vraie maîtresse.
+            <p className="text-xs font-medium text-primary-800 flex-1 leading-snug">
+              Ajoutez la classe de <span className="font-black">{activeChild.name}</span> pour que Léna corrige comme une vraie maîtresse de son niveau.
             </p>
             <Link
               href="/parent"
-              className="text-xs font-black text-amber-700 bg-amber-100 px-2.5 py-1 rounded-xl btn-press flex-shrink-0"
+              className="text-xs font-black text-white bg-primary-500 px-2.5 py-1.5 rounded-xl btn-press flex-shrink-0"
             >
-              Compléter
+              Compléter le profil
             </Link>
           </div>
         </div>
