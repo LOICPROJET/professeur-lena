@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
 import { QuizResult } from '@/lib/types'
+import { estimateCost, type UsageMeta } from '@/lib/openai-costs'
+
+const ROUTE_MODEL = 'gpt-4o' as const
 
 // ── Personas correction quiz par niveau ───────────────────────────────────────
 const CHECK_PERSONA: Record<string, string> = {
@@ -132,7 +135,18 @@ export async function POST(req: NextRequest) {
       encouragement: typeof data.encouragement === 'string' ? data.encouragement : 'Continue comme ça ! 🌟',
     }
 
-    return NextResponse.json(result)
+    // ── Usage tracking — best-effort ──────────────────────────────────────────
+    const usageRaw = response.usage
+    const _usage: UsageMeta | undefined = usageRaw ? {
+      route: 'check-answers',
+      model: ROUTE_MODEL,
+      promptTokens:     usageRaw.prompt_tokens,
+      completionTokens: usageRaw.completion_tokens,
+      totalTokens:      usageRaw.total_tokens,
+      estimatedCostUsd: estimateCost(ROUTE_MODEL, usageRaw.prompt_tokens, usageRaw.completion_tokens),
+    } : undefined
+
+    return NextResponse.json({ ...result, _usage })
   } catch (error) {
     console.error('check-answers error:', error)
     return NextResponse.json({ error: 'Une erreur est survenue. Réessaie !' }, { status: 500 })

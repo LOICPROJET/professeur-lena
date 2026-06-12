@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
 import { QuizQuestion } from '@/lib/types'
+import { estimateCost, type UsageMeta } from '@/lib/openai-costs'
+
+const ROUTE_MODEL = 'gpt-4o' as const
 
 // ── Personas questions par niveau ─────────────────────────────────────────────
 const QUESTION_PERSONA: Record<string, string> = {
@@ -119,7 +122,18 @@ export async function POST(req: NextRequest) {
 
     if (!questions.length) return NextResponse.json({ error: 'Impossible de lire la leçon.' }, { status: 500 })
 
-    return NextResponse.json({ title: data.title ?? subject, questions })
+    // ── Usage tracking — best-effort ──────────────────────────────────────────
+    const usageRaw = response.usage
+    const _usage: UsageMeta | undefined = usageRaw ? {
+      route: 'generate-questions',
+      model: ROUTE_MODEL,
+      promptTokens:     usageRaw.prompt_tokens,
+      completionTokens: usageRaw.completion_tokens,
+      totalTokens:      usageRaw.total_tokens,
+      estimatedCostUsd: estimateCost(ROUTE_MODEL, usageRaw.prompt_tokens, usageRaw.completion_tokens),
+    } : undefined
+
+    return NextResponse.json({ title: data.title ?? subject, questions, _usage })
   } catch (error) {
     console.error('generate-questions error:', error)
     return NextResponse.json({ error: 'Une erreur est survenue. Réessaie !' }, { status: 500 })

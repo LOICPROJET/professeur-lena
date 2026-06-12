@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
 import { CorrectionResultV2 } from '@/lib/types'
+import { estimateCost, type UsageMeta } from '@/lib/openai-costs'
+
+const ROUTE_MODEL = 'gpt-4o' as const
 
 // ─── Architecture hybride : INVARIANT + PERSONA niveau + FORMAT JSON ──────────
 //
@@ -260,7 +263,18 @@ export async function POST(req: NextRequest) {
       result = fallbackResult(rawText)
     }
 
-    return NextResponse.json(result)
+    // ── Usage tracking — best-effort, never blocks the response ──────────────
+    const usageRaw = response.usage
+    const _usage: UsageMeta | undefined = usageRaw ? {
+      route: 'correct-homework',
+      model: ROUTE_MODEL,
+      promptTokens:     usageRaw.prompt_tokens,
+      completionTokens: usageRaw.completion_tokens,
+      totalTokens:      usageRaw.total_tokens,
+      estimatedCostUsd: estimateCost(ROUTE_MODEL, usageRaw.prompt_tokens, usageRaw.completion_tokens),
+    } : undefined
+
+    return NextResponse.json({ ...result, _usage })
   } catch (error: unknown) {
     console.error('API Error:', error)
 

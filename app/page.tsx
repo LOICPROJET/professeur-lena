@@ -10,6 +10,7 @@ import ChildSelector from '@/components/ChildSelector'
 import LenaCharacter from '@/components/LenaCharacter'
 import Link from 'next/link'
 import { CorrectionResultV2, ChildProfile } from '@/lib/types'
+import { saveUsage, type UsageMeta } from '@/lib/openai-costs'
 import {
   saveHomework,
   generateId,
@@ -320,7 +321,10 @@ export default function Home() {
         throw new Error(data.error || 'Erreur serveur')
       }
 
-      const data: CorrectionResultV2 = await response.json()
+      const raw = await response.json() as CorrectionResultV2 & { _usage?: UsageMeta }
+      const { _usage, ...data } = raw
+      // Best-effort cost tracking — never blocks UX
+      try { if (_usage) saveUsage(_usage) } catch { /* silent */ }
       setResult(data)
 
       const thumbnail = await resizeImageForStorage(imageData).catch(() => '')

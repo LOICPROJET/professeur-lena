@@ -7,6 +7,7 @@ import SubjectSelector from '@/components/SubjectSelector'
 import LenaCharacter from '@/components/LenaCharacter'
 import { QuizQuestion, QuizResult } from '@/lib/types'
 import { getOrCreateActiveChild } from '@/lib/storage'
+import { saveUsage, type UsageMeta } from '@/lib/openai-costs'
 
 type Step = 'home' | 'subject' | 'loading-questions' | 'quiz' | 'loading-check' | 'results'
 
@@ -341,6 +342,8 @@ export default function RevisePage() {
       const res = await fetch('/api/generate-questions', { method: 'POST', body: formData })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Erreur')
+      // Best-effort cost tracking
+      try { if (data._usage) saveUsage(data._usage as UsageMeta) } catch { /* silent */ }
 
       setTitle(data.title ?? 'Ma leçon')
       setQuestions(data.questions ?? [])
@@ -363,6 +366,8 @@ export default function RevisePage() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Erreur')
+      // Best-effort cost tracking
+      try { if (data._usage) saveUsage(data._usage as UsageMeta) } catch { /* silent */ }
 
       setResult(data as QuizResult)
       setStep('results')
