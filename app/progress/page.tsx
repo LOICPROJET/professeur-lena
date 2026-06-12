@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import BottomNav from '@/components/BottomNav'
-import { getAllHomework, computeBadges, computeProgressStats, getOrCreateActiveChild, ProgressStats } from '@/lib/storage'
+import { getAllHomework, computeBadges, computeProgressStats, computeStreak, computeBestStreak, getStreakMessage, getOrCreateActiveChild, ProgressStats } from '@/lib/storage'
 import { HomeworkRecord, Badge, ChildProfile, SUBJECT_EMOJI } from '@/lib/types'
 import WeekTimeline from '@/components/WeekTimeline'
 
@@ -17,21 +17,6 @@ function scoreColor(score: number) {
 function avg(nums: number[]) {
   if (!nums.length) return 0
   return Math.round(nums.reduce((a, b) => a + b, 0) / nums.length)
-}
-
-function computeStreak(records: HomeworkRecord[]): number {
-  if (!records.length) return 0
-  const days = Array.from(new Set(records.map(r => r.date.slice(0, 10))))
-  const sorted = days.sort().reverse()
-  let streak = 0
-  const today = new Date()
-  for (let i = 0; i < sorted.length; i++) {
-    const expected = new Date(today)
-    expected.setDate(today.getDate() - i)
-    if (sorted[i] === expected.toISOString().slice(0, 10)) streak++
-    else break
-  }
-  return streak
 }
 
 // ─── Mini SVG line chart ──────────────────────────────────────────────────────
@@ -185,6 +170,8 @@ export default function ProgressPage() {
 
   const globalAvg = avg(records.map(r => r.correction.score))
   const streak = computeStreak(records)
+  const bestStreak = computeBestStreak(records)
+  const streakMsg = getStreakMessage(streak)
 
   // Per subject
   const bySubject: Record<string, number[]> = {}
@@ -260,15 +247,61 @@ export default function ProgressPage() {
 
       <div className="px-5 flex flex-col gap-4">
 
-        {/* Stat chips */}
-        <div className="grid grid-cols-3 gap-3">
+        {/* Stat chips — 2 colonnes (streak est sa propre carte) */}
+        <div className="grid grid-cols-2 gap-3">
           <StatChip icon="📝" value={records.length} label="Exercices" />
           <StatChip
-            icon={globalAvg >= 15 ? '🟢' : globalAvg >= 10 ? '🟡' : '🔴'}
+            icon={globalAvg >= 15 ? '⭐' : globalAvg >= 10 ? '📈' : '📌'}
             value={`${globalAvg}/20`}
             label="Moyenne"
           />
-          <StatChip icon="🔥" value={streak} label={streak === 1 ? 'jour' : 'jours'} />
+        </div>
+
+        {/* Carte streak — visuellement prioritaire */}
+        <div className={`rounded-3xl p-4 border ${
+          streak > 0
+            ? 'bg-orange-50 border-orange-200'
+            : 'bg-gray-50 border-gray-100'
+        }`}>
+          <div className="flex items-center justify-between">
+            {/* Série actuelle */}
+            <div className="flex items-center gap-3">
+              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-2xl shadow-sm ${
+                streak > 0 ? 'bg-orange-100' : 'bg-gray-100'
+              }`}>
+                🔥
+              </div>
+              <div>
+                <p className={`text-[11px] font-bold uppercase tracking-wide ${streak > 0 ? 'text-orange-500' : 'text-gray-400'}`}>
+                  Série actuelle
+                </p>
+                <p className={`text-2xl font-black ${streak > 0 ? 'text-orange-700' : 'text-gray-400'}`}>
+                  {streak} {streak === 1 ? 'jour' : 'jours'}
+                </p>
+              </div>
+            </div>
+            {/* Meilleure série */}
+            <div className="text-right">
+              <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wide">Meilleure</p>
+              <p className="text-2xl font-black text-[#1F2937]">
+                🏆 {bestStreak}
+              </p>
+              <p className="text-[11px] text-gray-400 font-medium">{bestStreak === 1 ? 'jour' : 'jours'}</p>
+            </div>
+          </div>
+          {/* Message motivant */}
+          {streakMsg && (
+            <p className={`text-sm font-semibold mt-3 pt-3 border-t ${
+              streak > 0 ? 'text-orange-700 border-orange-200' : 'text-gray-500 border-gray-200'
+            }`}>
+              {streakMsg}
+            </p>
+          )}
+          {streak === 0 && (
+            <p className="text-sm font-medium text-gray-400 mt-3 pt-3 border-t border-gray-200">
+              Fais un exercice aujourd'hui pour commencer une série ! 🌱
+            </p>
+          )}
         </div>
 
         {/* Motivational message + 7/30-day activity */}

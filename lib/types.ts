@@ -94,6 +94,7 @@ export interface WeeklyReport {
   recommendation: string       // Léna's recommendation for the parent
   level?: string               // CP, CE1, CE2, CM1, CM2 — from child profile at generation time
   weeklyAdvice?: string[]      // parentAdvice from this week's corrections (deduplicated)
+  streak?: number              // consecutive active days at time of generation (≥ 1 = meaningful)
 }
 
 // ─── Report export (for PDF / email — future use) ─────────────────────────────

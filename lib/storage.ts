@@ -319,6 +319,65 @@ function countFrequency(items: string[]): Array<{ text: string; count: number }>
     .map(([text, count]) => ({ text, count }))
 }
 
+// ─── Streak utilities ─────────────────────────────────────────────────────────
+
+/**
+ * Current consecutive-day streak ending today (or yesterday).
+ * Deduplicates by day so multiple exercises on the same day count once.
+ */
+export function computeStreak(records: HomeworkRecord[]): number {
+  if (!records.length) return 0
+  const days = Array.from(new Set(records.map(r => r.date.slice(0, 10))))
+  const sorted = days.sort().reverse()
+  let streak = 0
+  const today = new Date()
+  for (let i = 0; i < sorted.length; i++) {
+    const expected = new Date(today)
+    expected.setDate(today.getDate() - i)
+    if (sorted[i] === expected.toISOString().slice(0, 10)) streak++
+    else break
+  }
+  return streak
+}
+
+/**
+ * Longest consecutive-day streak ever recorded across all records.
+ * Always >= computeStreak(records).
+ */
+export function computeBestStreak(records: HomeworkRecord[]): number {
+  if (!records.length) return 0
+  const days = Array.from(new Set(records.map(r => r.date.slice(0, 10)))).sort()
+  if (days.length === 0) return 0
+
+  let best = 1
+  let current = 1
+  for (let i = 1; i < days.length; i++) {
+    const prev = new Date(days[i - 1])
+    const curr = new Date(days[i])
+    const diffDays = Math.round((curr.getTime() - prev.getTime()) / 86_400_000)
+    if (diffDays === 1) {
+      current++
+      if (current > best) best = current
+    } else {
+      current = 1
+    }
+  }
+  return best
+}
+
+/**
+ * Motivational message keyed on streak milestones.
+ * Returns '' when streak === 0.
+ */
+export function getStreakMessage(streak: number): string {
+  if (streak <= 0)  return ''
+  if (streak >= 30) return 'Champion des devoirs ! 🏅'
+  if (streak >= 14) return 'Impressionnant ! Continue comme ça. 🌟'
+  if (streak >= 7)  return 'Bravo, tu es persévérant ! 💪'
+  if (streak >= 3)  return 'Tu prends une bonne habitude. 🔥'
+  return 'Tu as commencé une série ! ⭐'
+}
+
 // ─── Badges ───────────────────────────────────────────────────────────────────
 
 export function computeBadges(records: HomeworkRecord[]): Badge[] {
@@ -326,17 +385,8 @@ export function computeBadges(records: HomeworkRecord[]): Badge[] {
   const sorted = [...records].sort((a, b) => a.date.localeCompare(b.date))
   const scores = sorted.map(r => r.correction.score)
 
-  // Streak
-  const days = Array.from(new Set(records.map(r => r.date.slice(0, 10))))
-  const sortedDays = days.sort().reverse()
-  let streak = 0
-  const today = new Date()
-  for (let i = 0; i < sortedDays.length; i++) {
-    const expected = new Date(today)
-    expected.setDate(today.getDate() - i)
-    if (sortedDays[i] === expected.toISOString().slice(0, 10)) streak++
-    else break
-  }
+  // Use the exported computeStreak — single source of truth
+  const streak = computeStreak(records)
 
   // Per subject averages
   const bySubject: Record<string, number[]> = {}
@@ -376,6 +426,13 @@ export function computeBadges(records: HomeworkRecord[]): Badge[] {
       label: 'Persévérant',
       description: '7 jours de suite',
       unlocked: streak >= 7,
+    },
+    {
+      id: 'streak30',
+      emoji: '🏅',
+      label: 'Champion',
+      description: '30 jours d\'affilée',
+      unlocked: streak >= 30,
     },
     {
       id: 'score18',
@@ -791,6 +848,9 @@ export function generateWeeklyReport(childId: string): WeeklyReport {
     recommendation,
     level,
     weeklyAdvice: weeklyAdvice.length > 0 ? weeklyAdvice : undefined,
+    // Streak at the moment of generation — uses ALL records (not just last7)
+    // so the streak reflects the child's current continuous activity
+    streak: computeStreak(records) || undefined,
   }
 }
 

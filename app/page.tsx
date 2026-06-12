@@ -20,6 +20,8 @@ import {
   runMigration,
   canAddChild,
   getOrCreateActiveChild,
+  getAllHomework,
+  computeStreak,
 } from '@/lib/storage'
 
 type Step = 'home' | 'subject' | 'preview' | 'loading' | 'results'
@@ -56,11 +58,13 @@ function HomeScreen({
   activeChild,
   childList,
   onOpenSelector,
+  streak,
 }: {
   onCapture: (file: File, dataUrl: string) => void
   activeChild: ChildProfile | null
   childList: ChildProfile[]
   onOpenSelector: () => void
+  streak: number
 }) {
   const name = activeChild ? activeChild.name : 'toi'
 
@@ -101,6 +105,14 @@ function HomeScreen({
         <h1 className="text-3xl font-black text-[#1F2937] leading-tight">
           Bonjour {name} 👋
         </h1>
+        {/* Streak badge — visible uniquement quand la série est active */}
+        {streak > 0 && (
+          <div className="mt-2 flex justify-center">
+            <span className="inline-flex items-center gap-1.5 bg-orange-50 border border-orange-200 text-orange-700 text-sm font-black px-3 py-1 rounded-full">
+              🔥 Série actuelle : {streak} {streak === 1 ? 'jour' : 'jours'}
+            </span>
+          </div>
+        )}
         <p className="mt-2 text-base text-[#8E8E93] font-medium leading-snug">
           Prends ton devoir en photo,<br />
           je vais t'aider à comprendre.
@@ -255,6 +267,7 @@ export default function Home() {
   const [activeChild, setActiveChild] = useState<ChildProfile | null>(null)
   const [showSelector, setShowSelector] = useState(false)
   const [storageWarning, setStorageWarning] = useState(false)
+  const [streak, setStreak] = useState(0)
 
   // Run migration + load children on mount
   // getOrCreateActiveChild() ensures there is always a valid profile
@@ -263,6 +276,7 @@ export default function Home() {
     const child = getOrCreateActiveChild()
     setActiveChild(child)
     setChildList(getChildren())
+    setStreak(computeStreak(getAllHomework(child.id)))
   }, [])
 
   const handlePhotoCapture = useCallback((file: File, dataUrl: string) => {
@@ -342,6 +356,7 @@ export default function Home() {
   const handleChildSwitch = useCallback((c: ChildProfile) => {
     setActiveChildId(c.id)
     setActiveChild(c)
+    setStreak(computeStreak(getAllHomework(c.id)))
   }, [])
 
   const handleAddChild = useCallback(() => {
@@ -356,7 +371,10 @@ export default function Home() {
       // Use stored active child — don't create a new profile on focus
       const activeId = getActiveChildId()
       const found = children.find(c => c.id === activeId) ?? children[0] ?? null
-      if (found) setActiveChild(found)
+      if (found) {
+        setActiveChild(found)
+        setStreak(computeStreak(getAllHomework(found.id)))
+      }
     }
     window.addEventListener('focus', onFocus)
     return () => window.removeEventListener('focus', onFocus)
@@ -370,6 +388,7 @@ export default function Home() {
           activeChild={activeChild}
           childList={childList}
           onOpenSelector={() => setShowSelector(true)}
+          streak={streak}
         />
       )}
       {step === 'subject' && (

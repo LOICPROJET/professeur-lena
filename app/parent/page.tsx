@@ -839,6 +839,19 @@ function ReportCard({ report }: { report: WeeklyReport }) {
           </div>
         </div>
       )}
+      {report.streak !== undefined && report.streak > 0 && (
+        <div className="bg-orange-50 rounded-3xl border border-orange-200 p-4 flex items-center gap-3">
+          <div className="w-11 h-11 rounded-2xl bg-orange-100 flex items-center justify-center text-2xl flex-shrink-0">
+            🔥
+          </div>
+          <div>
+            <p className="text-[10px] font-bold text-orange-500 uppercase tracking-wide">Série maintenue</p>
+            <p className="text-lg font-black text-orange-700">
+              {report.streak} {report.streak === 1 ? 'jour consécutif' : 'jours consécutifs'}
+            </p>
+          </div>
+        </div>
+      )}
       <div className="rounded-3xl p-5 text-white" style={{ background: 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)' }}>
         <div className="flex items-center gap-2 mb-2">
           <span className="text-xl">🤖</span>
