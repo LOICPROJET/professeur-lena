@@ -92,6 +92,8 @@ export interface WeeklyReport {
   bestSubject: string | null   // highest avg in the week (min 1 record)
   parentSummary: string        // natural language summary
   recommendation: string       // Léna's recommendation for the parent
+  level?: string               // CP, CE1, CE2, CM1, CM2 — from child profile at generation time
+  weeklyAdvice?: string[]      // parentAdvice from this week's corrections (deduplicated)
 }
 
 // ─── Report export (for PDF / email — future use) ─────────────────────────────
@@ -104,6 +106,7 @@ export interface ReportExport {
     weekEnd: string
     childName: string
     childEmoji: string
+    level?: string             // CP, CE1, CE2, CM1, CM2
   }
   stats: {
     totalCorrections: number
@@ -117,6 +120,7 @@ export interface ReportExport {
     weaknesses: string[]
     parentSummary: string
     recommendation: string
+    weeklyAdvice?: string[]    // Conseils issus des corrections de la semaine
   }
 }
 

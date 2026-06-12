@@ -595,6 +595,103 @@ export function saveWeeklyReport(report: WeeklyReport): void {
   }
 }
 
+// ─── Level-adapted report personas ───────────────────────────────────────────
+
+const PRIMARY_LEVELS_REPORT = ['CP', 'CE1', 'CE2', 'CM1', 'CM2']
+
+interface LevelPersona {
+  noActivity: string
+  single: (score: number, subject: string | null) => string
+  summaryTone: (score: number) => string
+  trendUp: (pts: number) => string
+  trendDown: (pts: number, weak?: string) => string
+  flat: (score: number, weak?: string) => string
+  tip: string
+}
+
+const REPORT_PERSONA: Record<string, LevelPersona> = {
+  CP: {
+    noActivity: `Pas d'activité cette semaine — sans inquiétude. Quelques minutes de lecture ou de jeu de sons chaque soir suffisent pour maintenir le rythme à cet âge.`,
+    single: (score, sub) =>
+      `1 petite activité${sub ? ` en ${sub}` : ''} cette semaine${score > 0 ? ` (${score}/20)` : ''} — bon début ! Des sessions courtes de 10 min, 2 à 3 fois par semaine, ancrent les apprentissages.`,
+    summaryTone: (s) =>
+      s >= 15 ? `Belle semaine — votre enfant est dans une super dynamique !`
+      : s >= 10 ? `Semaine encourageante, les apprentissages de CP avancent bien.`
+      : `Quelques tâtonnements, tout à fait normaux à 6 ans.`,
+    trendUp: (pts) => `Votre enfant progresse (+${pts} pts) — c'est formidable, félicitez-le chaleureusement !`,
+    trendDown: (pts, weak) => `Petite baisse (${pts} pts)${weak ? ` — un peu de pratique sur "${weak}"` : ''} — tout à fait normal en CP, ne dramatisez pas.`,
+    flat: (score, weak) =>
+      score >= 15 ? `Ces bons résultats montrent que les bases se mettent en place.`
+      : score < 10 ? `Quelques difficultés, mais chaque erreur est une étape normale d'apprentissage à 6 ans.${weak ? ` Pratiquez "${weak}" en jouant.` : ''}`
+      : `Continuez à encourager, la régularité est la clé à cet âge.`,
+    tip: `En CP, 10 à 15 minutes de lecture à voix haute chaque soir sont bien plus efficaces qu'une longue séance. La régularité et la bonne humeur font la différence.`,
+  },
+  CE1: {
+    noActivity: `Aucun exercice cette semaine. Une courte activité de lecture ou de calcul mental (15 min) permettra de relancer la régularité rapidement.`,
+    single: (score, sub) =>
+      `1 exercice${sub ? ` en ${sub}` : ''} cette semaine${score > 0 ? ` (${score}/20)` : ''}. Viser 2 à 3 activités de 15 minutes serait idéal pour progresser régulièrement.`,
+    summaryTone: (s) =>
+      s >= 15 ? `Très belle semaine !`
+      : s >= 10 ? `La semaine va dans la bonne direction.`
+      : `Quelques points à revoir, mais rien d'insurmontable.`,
+    trendUp: (pts) => `Belle progression (+${pts} pts) — les efforts réguliers payent.`,
+    trendDown: (pts, weak) => `Légère baisse (${pts} pts)${weak ? ` — quelques révisions sur "${weak}"` : ' — quelques révisions'} remettront vite les choses en place.`,
+    flat: (score, weak) =>
+      score >= 15 ? `Ces bons résultats confirment que les bases de CE1 sont bien assimilées.`
+      : score < 10 ? `Ces difficultés sont surmontables avec un peu de pratique régulière.${weak ? ` Travaillez "${weak}" en priorité.` : ''}`
+      : `La régularité est la clé — quelques minutes chaque jour suffisent à progresser.`,
+    tip: `En CE1, valorisez chaque petit progrès. 15 minutes de lecture ou de dictée le soir, en routine, consolident les bases de façon très efficace.`,
+  },
+  CE2: {
+    noActivity: `Pas d'exercice cette semaine. Relancer avec 20 minutes sur une leçon récente est idéal pour ne pas perdre le fil des acquis de CE2.`,
+    single: (score, sub) =>
+      `1 exercice${sub ? ` en ${sub}` : ''} cette semaine${score > 0 ? ` (${score}/20)` : ''}. 3 exercices hebdomadaires permettraient de consolider davantage les acquis du programme.`,
+    summaryTone: (s) =>
+      s >= 15 ? `Excellente semaine — l'autonomie se confirme.`
+      : s >= 10 ? `Bonne semaine, les méthodes commencent à s'installer.`
+      : `Semaine mitigée — quelques notions sont à consolider.`,
+    trendUp: (pts) => `Progression nette (+${pts} pts) — les méthodes apprises commencent à s'ancrer.`,
+    trendDown: (pts, weak) => `Légère baisse (${pts} pts)${weak ? ` — réviser "${weak}" avec un exercice ciblé` : ' — un peu de révision ciblée'} suffira à corriger ça.`,
+    flat: (score, weak) =>
+      score >= 15 ? `L'autonomie se confirme — ces résultats témoignent d'une belle maîtrise.`
+      : score < 10 ? `Identifier les notions précises à retravailler permettra de progresser rapidement.${weak ? ` Commencez par "${weak}".` : ''}`
+      : `Encouragez votre enfant à relire les leçons avant de faire les exercices.`,
+    tip: `En CE2, encouragez votre enfant à relire ses leçons avant de commencer les exercices. Cette habitude simple améliore notablement les résultats.`,
+  },
+  CM1: {
+    noActivity: `Semaine sans exercice. En CM1, maintenir la régularité est important pour préparer sereinement le passage en CM2.`,
+    single: (score, sub) =>
+      `1 exercice${sub ? ` en ${sub}` : ''} cette semaine${score > 0 ? ` (${score}/20)` : ''}. L'idéal serait 3 à 4 exercices hebdomadaires pour progresser de façon solide.`,
+    summaryTone: (s) =>
+      s >= 15 ? `Excellente semaine — les bases sont solides.`
+      : s >= 10 ? `Bonne semaine dans l'ensemble.`
+      : `Semaine difficile — un suivi ciblé est recommandé.`,
+    trendUp: (pts) => `Belle progression (+${pts} pts) — la régularité et la méthode paient.`,
+    trendDown: (pts, weak) => `Baisse de ${pts} pts${weak ? ` — des révisions ciblées sur "${weak}"` : ' — des révisions ciblées'} permettront de corriger ça avant le CM2.`,
+    flat: (score, weak) =>
+      score >= 15 ? `Les bases sont solides — les fondamentaux sont bien installés pour le CM2.`
+      : score < 10 ? `Un suivi ciblé des notions difficiles évitera un décalage en CM2.${weak ? ` Priorisez "${weak}".` : ''}`
+      : `La constance est la vraie clé en CM1 — 30 minutes régulières valent mieux que des sessions sporadiques.`,
+    tip: `En CM1, 30 minutes de travail régulier (exercices + relecture de leçon) suffisent pour préparer sereinement le passage en CM2. La constance est la vraie clé.`,
+  },
+  CM2: {
+    noActivity: `Aucun exercice cette semaine. En CM2, la régularité du travail est directement liée à la qualité de la transition vers le collège.`,
+    single: (score, sub) =>
+      `1 exercice${sub ? ` en ${sub}` : ''} cette semaine${score > 0 ? ` (${score}/20)` : ''}. En CM2, 4 à 5 exercices par semaine permettent une vraie préparation au collège.`,
+    summaryTone: (s) =>
+      s >= 15 ? `Semaine remarquable — le niveau est au rendez-vous pour l'entrée en 6ème.`
+      : s >= 10 ? `Semaine solide. Les acquis progressent dans le bon sens.`
+      : `Semaine difficile. Des lacunes non traitées maintenant risquent de créer un écart en 6ème.`,
+    trendUp: (pts) => `Progression significative (+${pts} pts) — la rigueur et la méthode produisent des résultats.`,
+    trendDown: (pts, weak) => `Baisse de ${pts} pts${weak ? ` sur "${weak}"` : ''}. En CM2, chaque lacune identifiée mérite une révision ciblée — les bases seront attendues dès la rentrée en 6ème.`,
+    flat: (score, weak) =>
+      score >= 15 ? `Le niveau est au rendez-vous pour l'entrée en 6ème — continuez sur cette lancée.`
+      : score < 10 ? `Il est important de consolider ces lacunes avant le collège.${weak ? ` Commencez par "${weak}".` : ''}`
+      : `L'enjeu est maintenant la méthode : relecture systématique, justification des réponses, vérification des calculs.`,
+    tip: `En CM2, l'enjeu est la méthode : relecture systématique, justification des réponses, vérification des calculs. Ces réflexes, pris maintenant, feront toute la différence au collège.`,
+  },
+}
+
 /**
  * Generates a WeeklyReport from the last 7 days of homework for a given child.
  * Does NOT save automatically — call saveWeeklyReport() afterwards.
@@ -639,35 +736,43 @@ export function generateWeeklyReport(childId: string): WeeklyReport {
   const strengths = countFrequency(allMastered).slice(0, 3).map(x => x.text)
   const weaknesses = countFrequency(allWeak).slice(0, 3).map(x => x.text)
 
-  // Natural language messages
+  // ── Resolve child level ────────────────────────────────────────────────────
+  const child = getChildren().find(c => c.id === childId)
+  const rawLevel = child?.level ?? ''
+  const level = PRIMARY_LEVELS_REPORT.includes(rawLevel) ? rawLevel : 'CM1'
+  const persona = REPORT_PERSONA[level]
+
+  // ── Level-adapted parentSummary & recommendation ───────────────────────────
   let parentSummary: string
   let recommendation: string
 
   if (totalCorrections === 0) {
-    parentSummary = "Aucun exercice corrigé cette semaine."
-    recommendation = "Cette semaine a été calme. Quelques exercices réguliers permettront de reprendre le rythme."
+    parentSummary = `Aucun exercice corrigé cette semaine.`
+    recommendation = persona.noActivity
   } else if (totalCorrections === 1) {
-    parentSummary = `1 exercice corrigé cette semaine${averageScore > 0 ? `, avec une note de ${averageScore}/20` : ''}.`
-    recommendation = "Un bon début ! L'idéal serait de viser 2 à 3 exercices par semaine pour progresser régulièrement."
+    parentSummary = persona.single(averageScore, mostWorkedSubject)
+    recommendation = persona.tip
   } else {
-    const subjectStr = mostWorkedSubject ? ` en ${mostWorkedSubject}` : ''
-    parentSummary = `${totalCorrections} exercices corrigés cette semaine${subjectStr}, avec une moyenne de ${averageScore}/20.`
+    const sub = mostWorkedSubject ? ` en ${mostWorkedSubject}` : ''
+    parentSummary = `${totalCorrections} exercices corrigés${sub} cette semaine (moy. ${averageScore}/20). ${persona.summaryTone(averageScore)}`
 
     if (scoreTrend > 1) {
-      recommendation = `Belle progression cette semaine (+${scoreTrend} pts vs la semaine précédente). Les efforts paient, continuez ainsi !`
+      recommendation = `${persona.trendUp(scoreTrend)} ${persona.tip}`
     } else if (scoreTrend < -1) {
-      const tip = weaknesses.length > 0 ? ` sur "${weaknesses[0]}"` : ''
-      recommendation = `Une légère baisse est observée (${scoreTrend} pts). Quelques révisions ciblées${tip} devraient rapidement aider.`
-    } else if (averageScore >= 16) {
-      recommendation = `Excellente semaine ! La moyenne de ${averageScore}/20 est remarquable. Encouragez à maintenir ce rythme.`
-    } else if (averageScore >= 13) {
-      recommendation = `Bonne semaine dans l'ensemble (${averageScore}/20). Continuez à encourager et à maintenir la régularité.`
-    } else if (averageScore >= 10) {
-      recommendation = `Semaine correcte (${averageScore}/20). Insistez sur les points à retravailler pour progresser davantage.`
+      const weak = weaknesses.length > 0 ? weaknesses[0] : undefined
+      recommendation = `${persona.trendDown(Math.abs(scoreTrend), weak)} ${persona.tip}`
     } else {
-      recommendation = `La semaine montre quelques difficultés (moy. ${averageScore}/20). Un accompagnement ciblé serait bénéfique cette semaine.`
+      const weak = weaknesses.length > 0 ? weaknesses[0] : undefined
+      recommendation = `${persona.flat(averageScore, weak)} ${persona.tip}`
     }
   }
+
+  // ── Aggregate parentAdvice from this week's corrections ────────────────────
+  const weeklyAdvice = last7
+    .map(r => r.correction.parentAdvice)
+    .filter((v): v is string => Boolean(v?.trim()))
+    .filter((v, i, arr) => arr.indexOf(v) === i)
+    .slice(0, 3)
 
   return {
     id: `report_${childId}_${Date.now()}`,
@@ -684,6 +789,8 @@ export function generateWeeklyReport(childId: string): WeeklyReport {
     bestSubject,
     parentSummary,
     recommendation,
+    level,
+    weeklyAdvice: weeklyAdvice.length > 0 ? weeklyAdvice : undefined,
   }
 }
 
@@ -701,6 +808,7 @@ export function buildReportData(report: WeeklyReport): ReportExport {
       weekEnd: report.weekEnd,
       childName: child?.name ?? 'Enfant',
       childEmoji: child?.emoji ?? '👧',
+      level: report.level,
     },
     stats: {
       totalCorrections: report.totalCorrections,
@@ -714,6 +822,7 @@ export function buildReportData(report: WeeklyReport): ReportExport {
       weaknesses: report.weaknesses,
       parentSummary: report.parentSummary,
       recommendation: report.recommendation,
+      weeklyAdvice: report.weeklyAdvice,
     },
   }
 }

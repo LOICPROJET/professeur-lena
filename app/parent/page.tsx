@@ -771,6 +771,11 @@ function ReportCard({ report }: { report: WeeklyReport }) {
           <div>
             <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1">Semaine</p>
             <p className="text-sm font-bold text-[#1F2937]">{weekRange}</p>
+            {report.level && (
+              <span className="inline-block text-[10px] font-black text-white bg-primary-500 px-1.5 py-0.5 rounded-md mt-1.5">
+                {report.level}
+              </span>
+            )}
           </div>
           <div className="text-right">
             <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1">Exercices</p>
@@ -841,6 +846,21 @@ function ReportCard({ report }: { report: WeeklyReport }) {
         </div>
         <p className="text-sm leading-relaxed opacity-95">{report.recommendation}</p>
       </div>
+      {report.weeklyAdvice && report.weeklyAdvice.length > 0 && (
+        <div className="bg-blue-50 rounded-3xl border border-blue-100 p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-xl">💡</span>
+            <p className="font-black text-sm text-blue-800">Conseils de Léna cette semaine</p>
+          </div>
+          <div className="flex flex-col gap-2">
+            {report.weeklyAdvice.map((advice, i) => (
+              <div key={i} className="bg-white rounded-2xl p-3 border border-blue-100">
+                <p className="text-sm text-blue-700 font-medium leading-snug">{advice}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
