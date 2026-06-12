@@ -8,6 +8,8 @@ import LenaCharacter from '@/components/LenaCharacter'
 import { QuizQuestion, QuizResult } from '@/lib/types'
 import { getOrCreateActiveChild } from '@/lib/storage'
 import { saveUsage, type UsageMeta } from '@/lib/openai-costs'
+import { canQuiz } from '@/lib/quotas'
+import PaywallModal from '@/components/PaywallModal'
 
 type Step = 'home' | 'subject' | 'loading-questions' | 'quiz' | 'loading-check' | 'results'
 
@@ -314,6 +316,7 @@ export default function RevisePage() {
   const [answers, setAnswers] = useState<Record<number, string>>({})
   const [result, setResult] = useState<QuizResult | null>(null)
   const [error, setError] = useState('')
+  const [showPaywall, setShowPaywall] = useState(false)
   // Niveau scolaire de l'enfant actif — variable pédagogique centrale
   const [childLevel, setChildLevel] = useState<string>('CM1')
 
@@ -329,6 +332,13 @@ export default function RevisePage() {
   }, [])
 
   const handleSubjectSelect = useCallback(async (selectedSubject: string) => {
+    // ── Freemium quota check ──────────────────────────────────────────────────
+    const quota = canQuiz()
+    if (!quota.allowed) {
+      setShowPaywall(true)
+      return
+    }
+
     setSubject(selectedSubject)
     setStep('loading-questions')
 
@@ -428,6 +438,14 @@ export default function RevisePage() {
           answers={answers}
           onRetry={handleRetry}
           onNew={handleNew}
+        />
+      )}
+
+      {/* Freemium paywall modal */}
+      {showPaywall && (
+        <PaywallModal
+          type="quiz"
+          onClose={() => setShowPaywall(false)}
         />
       )}
     </main>

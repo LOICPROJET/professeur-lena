@@ -47,9 +47,14 @@ export interface QuizResult {
 }
 
 // ─── Premium / family limits ──────────────────────────────────────────────────
-
-export const IS_PREMIUM = true                 // set false → free tier (1 child max)
-export const MAX_CHILDREN = IS_PREMIUM ? 3 : 1
+// ⚠️  IS_PREMIUM and MAX_CHILDREN are no longer static constants.
+//     Use getUserPlan() and getMaxChildren() from lib/quotas.ts instead.
+//     These aliases are kept temporarily for backwards-compat with components
+//     that haven't been migrated yet — they will be removed once Sprint 10 is done.
+//
+// @deprecated — use lib/quotas.ts
+export const IS_PREMIUM = false   // always false — dynamic check in lib/quotas.ts
+export const MAX_CHILDREN = 1     // fallback — use getMaxChildren() from lib/quotas.ts
 
 // ─── Child profile ────────────────────────────────────────────────────────────
 

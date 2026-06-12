@@ -25,10 +25,9 @@ import {
   ChildProfile,
   SCHOOL_LEVELS,
   CHILD_EMOJIS,
-  MAX_CHILDREN,
-  IS_PREMIUM,
   WeeklyReport,
 } from '@/lib/types'
+import { getUserPlan, getMaxChildren, isPremium } from '@/lib/quotas'
 import WeekTimeline from '@/components/WeekTimeline'
 import BottomNav from '@/components/BottomNav'
 
@@ -466,6 +465,8 @@ function ChildrenManager({ onRefresh }: { onRefresh?: () => void }) {
   const pendingDeleteChild = children.find(c => c.id === pendingDeleteId) ?? null
   const editChild = editId ? children.find(c => c.id === editId) : undefined
   const atLimit = !canAddChild()
+  const maxChildren = getMaxChildren()
+  const userIsPremium = isPremium()
 
   return (
     <>
@@ -484,7 +485,7 @@ function ChildrenManager({ onRefresh }: { onRefresh?: () => void }) {
           <div className="flex items-center gap-2">
             <span className="text-xl">👨‍👩‍👧</span>
             <h3 className="font-black text-base text-[#1F2937]">Mes enfants</h3>
-            {IS_PREMIUM && (
+            {userIsPremium && (
               <span className="text-[10px] font-bold text-primary-500 bg-primary-50 border border-primary-100 px-2 py-0.5 rounded-full">
                 PREMIUM
               </span>
@@ -499,7 +500,7 @@ function ChildrenManager({ onRefresh }: { onRefresh?: () => void }) {
                   ? 'bg-gray-50 text-gray-300 cursor-default'
                   : 'bg-primary-50 text-primary-500'
               }`}
-              title={atLimit ? `Limite de ${MAX_CHILDREN} enfants atteinte` : 'Ajouter un enfant'}
+              title={atLimit ? `Limite de ${maxChildren} enfants atteinte` : 'Ajouter un enfant'}
             >
               +
             </button>
@@ -510,10 +511,10 @@ function ChildrenManager({ onRefresh }: { onRefresh?: () => void }) {
         <div className="mb-3">
           <div className="flex items-center justify-between">
             <span className="text-xs text-gray-400 font-medium">
-              {children.length} / {MAX_CHILDREN} enfant{MAX_CHILDREN > 1 ? 's' : ''}
+              {children.length} / {maxChildren} enfant{maxChildren > 1 ? 's' : ''}
             </span>
             <div className="flex gap-0.5">
-              {Array.from({ length: MAX_CHILDREN }).map((_, i) => (
+              {Array.from({ length: maxChildren }).map((_, i) => (
                 <div
                   key={i}
                   className={`w-4 h-1.5 rounded-full ${i < children.length ? 'bg-primary-400' : 'bg-gray-200'}`}
@@ -614,8 +615,8 @@ function ChildrenManager({ onRefresh }: { onRefresh?: () => void }) {
         {/* Limit message */}
         {atLimit && !showForm && (
           <p className="text-xs text-center text-gray-400 mt-3 italic">
-            Limite de {MAX_CHILDREN} enfants atteinte
-            {!IS_PREMIUM ? ' · Passez à Premium pour en ajouter plus' : ''}
+            Limite de {maxChildren} enfants atteinte
+            {!userIsPremium ? ' · Passez à Premium pour en ajouter plus' : ''}
           </p>
         )}
       </div>
@@ -1039,12 +1040,29 @@ function Dashboard({
             </h1>
             <p className="text-sm text-[#8E8E93] font-medium">{childName}</p>
           </div>
-          <button
-            onClick={onLock}
-            className="text-xs text-gray-400 font-medium bg-gray-100 px-3 py-1.5 rounded-xl btn-press"
-          >
-            🔒 Verrouiller
-          </button>
+          <div className="flex items-center gap-2">
+            {getUserPlan() !== 'free' ? (
+              <Link
+                href="/premium"
+                className="text-xs font-black text-primary-500 bg-primary-50 border border-primary-100 px-3 py-1.5 rounded-xl btn-press"
+              >
+                ⭐ {getUserPlan() === 'famille' ? 'Famille' : 'Premium'}
+              </Link>
+            ) : (
+              <Link
+                href="/premium"
+                className="text-xs font-bold text-gray-500 bg-gray-100 px-3 py-1.5 rounded-xl btn-press"
+              >
+                ⭐ Passer Premium
+              </Link>
+            )}
+            <button
+              onClick={onLock}
+              className="text-xs text-gray-400 font-medium bg-gray-100 px-3 py-1.5 rounded-xl btn-press"
+            >
+              🔒 Verrouiller
+            </button>
+          </div>
         </div>
         {/* Tab switcher */}
         <div className="flex gap-1 bg-gray-100 rounded-2xl p-1">
@@ -1101,7 +1119,7 @@ function Dashboard({
               icon="👨‍👩‍👧"
               value={childCount}
               label={childCount > 1 ? 'enfants' : 'enfant'}
-              sub={`${IS_PREMIUM ? 'Premium' : 'Gratuit'} · max ${MAX_CHILDREN}`}
+              sub={`${getUserPlan() !== 'free' ? (getUserPlan() === 'famille' ? 'Famille' : 'Premium') : 'Gratuit'} · max ${getMaxChildren()}`}
             />
           </div>
         )}

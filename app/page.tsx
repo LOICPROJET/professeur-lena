@@ -8,9 +8,12 @@ import CameraCapture from '@/components/CameraCapture'
 import BottomNav from '@/components/BottomNav'
 import ChildSelector from '@/components/ChildSelector'
 import LenaCharacter from '@/components/LenaCharacter'
+import SoftLimitBanner from '@/components/SoftLimitBanner'
+import PaywallModal from '@/components/PaywallModal'
 import Link from 'next/link'
 import { CorrectionResultV2, ChildProfile } from '@/lib/types'
 import { saveUsage, type UsageMeta } from '@/lib/openai-costs'
+import { canCorrect, getMonthlyUsage, getUserPlan, FREE_LIMITS } from '@/lib/quotas'
 import {
   saveHomework,
   generateId,
@@ -60,14 +63,19 @@ function HomeScreen({
   childList,
   onOpenSelector,
   streak,
+  correctionsUsed,
 }: {
   onCapture: (file: File, dataUrl: string) => void
   activeChild: ChildProfile | null
   childList: ChildProfile[]
   onOpenSelector: () => void
   streak: number
+  correctionsUsed: number
 }) {
   const name = activeChild ? activeChild.name : 'toi'
+  const plan = getUserPlan()
+  const isFreePlan = plan === 'free'
+  const limit = FREE_LIMITS.correctionsPerMonth
 
   return (
     <div className="flex flex-col min-h-screen pb-20">
@@ -81,6 +89,13 @@ function HomeScreen({
             childCount={childList.length}
             onClick={onOpenSelector}
           />
+        </div>
+      )}
+
+      {/* Quota usage counter — free plan only */}
+      {isFreePlan && correctionsUsed > 0 && (
+        <div className="px-5 pt-2 pb-0">
+          <SoftLimitBanner used={correctionsUsed} limit={limit} type="correction" />
         </div>
       )}
 
@@ -269,6 +284,8 @@ export default function Home() {
   const [showSelector, setShowSelector] = useState(false)
   const [storageWarning, setStorageWarning] = useState(false)
   const [streak, setStreak] = useState(0)
+  const [correctionsUsed, setCorrectionsUsed] = useState(0)
+  const [showPaywall, setShowPaywall] = useState(false)
 
   // Run migration + load children on mount
   // getOrCreateActiveChild() ensures there is always a valid profile
@@ -278,6 +295,8 @@ export default function Home() {
     setActiveChild(child)
     setChildList(getChildren())
     setStreak(computeStreak(getAllHomework(child.id)))
+    // Load monthly quota usage (free plan only)
+    setCorrectionsUsed(getMonthlyUsage().corrections)
   }, [])
 
   const handlePhotoCapture = useCallback((file: File, dataUrl: string) => {
@@ -294,6 +313,14 @@ export default function Home() {
 
   const handleCorrect = useCallback(async () => {
     if (!imageFile && !imageData) return
+
+    // ── Freemium quota check ──────────────────────────────────────────────────
+    const quota = canCorrect()
+    if (!quota.allowed) {
+      setShowPaywall(true)
+      return
+    }
+
     setStep('loading')
     setError('')
     setStorageWarning(false)
@@ -325,6 +352,8 @@ export default function Home() {
       const { _usage, ...data } = raw
       // Best-effort cost tracking — never blocks UX
       try { if (_usage) saveUsage(_usage) } catch { /* silent */ }
+      // Refresh monthly usage counter for free plan banner
+      setCorrectionsUsed(getMonthlyUsage().corrections)
       setResult(data)
 
       const thumbnail = await resizeImageForStorage(imageData).catch(() => '')
@@ -393,6 +422,7 @@ export default function Home() {
           childList={childList}
           onOpenSelector={() => setShowSelector(true)}
           streak={streak}
+          correctionsUsed={correctionsUsed}
         />
       )}
       {step === 'subject' && (
@@ -437,6 +467,14 @@ export default function Home() {
           onSelect={handleChildSwitch}
           onAdd={handleAddChild}
           onClose={() => setShowSelector(false)}
+        />
+      )}
+
+      {/* Freemium paywall modal */}
+      {showPaywall && (
+        <PaywallModal
+          type="correction"
+          onClose={() => setShowPaywall(false)}
         />
       )}
     </main>

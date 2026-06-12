@@ -1,4 +1,5 @@
-import { HomeworkRecord, Badge, ChildProfile, MAX_CHILDREN, WeeklyReport, ReportExport } from './types'
+import { HomeworkRecord, Badge, ChildProfile, WeeklyReport, ReportExport } from './types'
+import { getMaxChildren } from './quotas'
 
 const STORAGE_KEY = 'professeur-lena-history'      // legacy key (no child)
 const CHILDREN_KEY = 'professeur-lena-children'
@@ -64,7 +65,7 @@ export function deleteChild(id: string): void {
 
 export function canAddChild(): boolean {
   if (typeof window === 'undefined') return false
-  return getChildren().length < MAX_CHILDREN
+  return getChildren().length < getMaxChildren()
 }
 
 // ─── Migration: legacy data → first child profile ─────────────────────────────

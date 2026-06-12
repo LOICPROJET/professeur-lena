@@ -1,7 +1,9 @@
 'use client'
 
 import { useEffect } from 'react'
-import { ChildProfile, MAX_CHILDREN } from '@/lib/types'
+import { useRouter } from 'next/navigation'
+import { ChildProfile } from '@/lib/types'
+import { getMaxChildren } from '@/lib/quotas'
 
 interface ChildSelectorProps {
   children: ChildProfile[]
@@ -20,6 +22,9 @@ export default function ChildSelector({
   onAdd,
   onClose,
 }: ChildSelectorProps) {
+  const router = useRouter()
+  const maxChildren = getMaxChildren()
+
   // Close on Escape key
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -117,26 +122,27 @@ export default function ChildSelector({
 
         {/* Add child button */}
         <div className="px-5 pb-5">
-          <button
-            onClick={() => { onAdd(); onClose() }}
-            disabled={!canAdd}
-            className={`w-full py-3.5 rounded-2xl flex items-center justify-center gap-2 font-bold text-sm transition-all btn-press ${
-              canAdd
-                ? 'bg-primary-500 text-white shadow-md shadow-primary-200'
-                : 'bg-gray-100 text-gray-400 cursor-default'
-            }`}
-          >
-            <span>{canAdd ? '➕' : '🔒'}</span>
-            <span>
-              {canAdd
-                ? 'Ajouter un enfant'
-                : `Limite ${MAX_CHILDREN} enfant${MAX_CHILDREN > 1 ? 's' : ''} atteinte`}
-            </span>
-          </button>
-          {!canAdd && (
-            <p className="text-center text-[11px] text-gray-400 mt-2">
-              Gérer les profils depuis l'Espace Parent
-            </p>
+          {canAdd ? (
+            <button
+              onClick={() => { onAdd(); onClose() }}
+              className="w-full py-3.5 rounded-2xl flex items-center justify-center gap-2 font-bold text-sm bg-primary-500 text-white shadow-md shadow-primary-200 btn-press"
+            >
+              <span>➕</span>
+              <span>Ajouter un enfant</span>
+            </button>
+          ) : (
+            <>
+              <button
+                onClick={() => { onClose(); router.push('/premium') }}
+                className="w-full py-3.5 rounded-2xl flex items-center justify-center gap-2 font-bold text-sm bg-primary-50 border border-primary-200 text-primary-600 btn-press"
+              >
+                <span>🔒</span>
+                <span>Limite {maxChildren} enfant{maxChildren > 1 ? 's' : ''} — Passer Premium</span>
+              </button>
+              <p className="text-center text-[11px] text-gray-400 mt-2">
+                Premium : 3 enfants · Famille : 5 enfants
+              </p>
+            </>
           )}
         </div>
 

@@ -6,6 +6,7 @@ import BottomNav from '@/components/BottomNav'
 import { ScoreBadge } from '@/components/ResultCards'
 import { getAllHomework, deleteHomework, getOrCreateActiveChild } from '@/lib/storage'
 import { HomeworkRecord, SUBJECT_EMOJI, ChildProfile } from '@/lib/types'
+import { getUserPlan, getHistoryDaysLimit, FREE_LIMITS } from '@/lib/quotas'
 
 // ─── Format date ──────────────────────────────────────────────────────────────
 function formatDate(iso: string) {
@@ -191,6 +192,7 @@ function EmptyState() {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function HistoryPage() {
   const [records, setRecords] = useState<HomeworkRecord[]>([])
+  const [hiddenCount, setHiddenCount] = useState(0)
   const [selectedRecord, setSelectedRecord] = useState<HomeworkRecord | null>(null)
   const [loaded, setLoaded] = useState(false)
   const [activeChild, setActiveChild] = useState<ChildProfile | null>(null)
@@ -198,7 +200,20 @@ export default function HistoryPage() {
   useEffect(() => {
     const child = getOrCreateActiveChild()
     setActiveChild(child)
-    setRecords(getAllHomework(child.id))
+    const all = getAllHomework(child.id)
+
+    // Free plan: show only last 30 days
+    const daysLimit = getHistoryDaysLimit()
+    if (daysLimit !== null) {
+      const cutoff = new Date()
+      cutoff.setDate(cutoff.getDate() - daysLimit)
+      const visible = all.filter(r => new Date(r.date) >= cutoff)
+      setHiddenCount(all.length - visible.length)
+      setRecords(visible)
+    } else {
+      setRecords(all)
+      setHiddenCount(0)
+    }
     setLoaded(true)
   }, [])
 
@@ -206,6 +221,8 @@ export default function HistoryPage() {
     deleteHomework(id, activeChild?.id ?? null)
     setRecords((prev) => prev.filter((r) => r.id !== id))
   }
+
+  const isFreePlan = getUserPlan() === 'free'
 
   return (
     <div className="min-h-screen bg-[#F9FAF8] max-w-md mx-auto flex flex-col pb-20">
@@ -220,6 +237,28 @@ export default function HistoryPage() {
           {records.length > 0 ? `${records.length} devoir${records.length > 1 ? 's' : ''} corrigé${records.length > 1 ? 's' : ''}` : 'Historique vide'}
         </p>
       </div>
+
+      {/* History gate banner — free plan with hidden records */}
+      {isFreePlan && hiddenCount > 0 && (
+        <div className="mx-6 mb-3 bg-primary-50 border border-primary-100 rounded-2xl px-4 py-3 flex items-start gap-3">
+          <span className="text-xl flex-shrink-0">🔒</span>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-black text-primary-700">
+              {hiddenCount} devoir{hiddenCount > 1 ? 's' : ''} masqué{hiddenCount > 1 ? 's' : ''}
+            </p>
+            <p className="text-[11px] text-primary-600 font-medium mt-0.5 leading-snug">
+              Le plan gratuit affiche les {FREE_LIMITS.historyDays} derniers jours.
+              Passez Premium pour l'historique complet de l'année scolaire.
+            </p>
+          </div>
+          <Link
+            href="/premium"
+            className="flex-shrink-0 bg-primary-500 text-white text-xs font-black px-3 py-1.5 rounded-xl btn-press"
+          >
+            Premium
+          </Link>
+        </div>
+      )}
 
       {/* Content */}
       {!loaded ? (
