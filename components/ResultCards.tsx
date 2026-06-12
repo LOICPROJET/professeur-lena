@@ -192,6 +192,7 @@ function BravoBanner({ content, childName }: { content: string; childName?: stri
 // ─── Main component ───────────────────────────────────────────────────────────
 export default function ResultCards({ result, subject, onNew, childName, childLevel }: ResultCardsProps) {
   const emoji = SUBJECT_EMOJI[subject] || '✨'
+  const [showDetails, setShowDetails] = useState(false)
 
   const cards: CardProps[] = [
     {
@@ -228,22 +229,22 @@ export default function ResultCards({ result, subject, onNew, childName, childLe
     },
   ]
 
+  // XP gagnés pour cette correction (même barème que lib/gamification)
+  const xpGained = result.score >= 18 ? 50 : result.score >= 15 ? 40 : result.score >= 10 ? 30 : 20
+
   return (
     <div className="flex flex-col min-h-screen pb-24 animate-fade-in">
       <div className="h-12" />
 
-      {/* Header */}
-      <div className="px-6 pt-4 pb-3">
-        <button onClick={onNew} className="w-9 h-9 rounded-full bg-white shadow-sm flex items-center justify-center mb-3 btn-press">
+      {/* Header façon maquette : titre centré + fermer */}
+      <div className="px-6 pt-4 pb-3 flex items-center justify-between">
+        <button onClick={onNew} className="w-9 h-9 rounded-full bg-white shadow-card flex items-center justify-center btn-press">
           <span className="text-gray-500 text-lg">←</span>
         </button>
-        <div className="flex items-center gap-2 mb-0.5">
-          <span className="text-2xl">⭐</span>
-          <h2 className="text-2xl font-black text-[#1D1D1F]">Super, j'ai corrigé !</h2>
-        </div>
-        <p className="text-sm text-[#8E8E93] font-medium">
-          {emoji} {subject} · Regarde, je t'explique tout 😊
-        </p>
+        <h2 className="text-xl font-black text-[#1D1D1F]">Résultat</h2>
+        <button onClick={onNew} className="w-9 h-9 rounded-full bg-primary-500 shadow-card flex items-center justify-center btn-press">
+          <span className="text-white text-sm font-black">✕</span>
+        </button>
       </div>
 
       {/* Message bienveillant Léna — affiché uniquement pour score < 10 */}
@@ -253,28 +254,86 @@ export default function ResultCards({ result, subject, onNew, childName, childLe
         </div>
       )}
 
-      {/* Score bar */}
-      <div className="px-6 mb-1 animate-slide-up" style={{ animationDelay: '0ms' }}>
-        <ScoreBar score={result.score} />
+      {/* Score circulaire centré façon maquette */}
+      <div className="px-6 animate-slide-up">
+        <div className="bg-white rounded-3xl p-6 shadow-card border border-gray-100 flex flex-col items-center">
+          <ScoreBadge score={result.score} size="lg" />
+          <p className="mt-3 font-black text-lg text-[#1D1D1F]">
+            {result.score >= 15 ? 'Excellent !' : result.score >= 12 ? 'Très bien !' : result.score >= 10 ? 'Bien !' : 'Continue tes efforts !'}
+          </p>
+          <p className="text-xs text-[#4B5563] font-semibold">{emoji} {subject} · + {xpGained} XP</p>
+        </div>
       </div>
 
-      {/* Cards */}
-      <div className="px-6 mt-3 flex flex-col gap-3">
-        {cards.map((card) => (
-          <ResultCard key={card.title} {...card} />
-        ))}
+      {/* Points réussis — coches vertes façon maquette */}
+      {result.masteredSkills?.length > 0 && (
+        <div className="px-6 mt-3 animate-slide-up" style={{ animationDelay: '80ms' }}>
+          <div className="bg-white rounded-3xl p-5 shadow-card border border-gray-100">
+            <p className="text-xs font-black text-[#4B5563] uppercase tracking-wide mb-3">Points réussis</p>
+            <div className="flex flex-col gap-2.5">
+              {result.masteredSkills.map((skill, i) => (
+                <div key={i} className="flex items-center gap-2.5">
+                  <span className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#34C759" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 13l4 4 10-10" /></svg>
+                  </span>
+                  <span className="text-sm font-semibold text-[#1D1D1F]">{skill}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* À revoir — alerte orange façon maquette */}
+      {result.weakSkills?.length > 0 && (
+        <div className="px-6 mt-3 animate-slide-up" style={{ animationDelay: '160ms' }}>
+          <div className="bg-white rounded-3xl p-5 shadow-card border border-gray-100">
+            <p className="text-xs font-black text-[#4B5563] uppercase tracking-wide mb-3">À revoir</p>
+            <div className="flex flex-col gap-2.5">
+              {result.weakSkills.map((skill, i) => (
+                <div key={i} className="flex items-center gap-2.5">
+                  <span className="w-6 h-6 rounded-full bg-orange-100 flex items-center justify-center flex-shrink-0">
+                    <span className="text-warning text-xs font-black">!</span>
+                  </span>
+                  <span className="text-sm font-semibold text-danger">Attention : {skill}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* CTA "Comprendre mes erreurs" — révèle les explications */}
+      <div className="px-6 mt-4">
+        <button onClick={() => setShowDetails(v => !v)}
+          className="w-full text-white font-black text-base py-4 rounded-full shadow-lumio btn-press flex items-center justify-center gap-2"
+          style={{ background: 'linear-gradient(135deg, #4F7CFF 0%, #7299FF 100%)' }}>
+          <span>{showDetails ? 'Masquer les explications' : 'Comprendre mes erreurs'}</span>
+        </button>
+      </div>
+
+      {/* Cartes d'explication détaillées */}
+      {showDetails && (
+        <div className="px-6 mt-4 flex flex-col gap-3 animate-fade-in">
+          {cards.map((card) => (
+            <ResultCard key={card.title} {...card} />
+          ))}
+        </div>
+      )}
+
+      {/* Bravo */}
+      <div className="px-6 mt-4">
         <BravoBanner content={result.encouragement} childName={childName} />
       </div>
 
       {/* Actions */}
-      <div className="px-6 mt-6 flex flex-col gap-3">
+      <div className="px-6 mt-5 flex flex-col gap-3">
         <button onClick={onNew}
-          className="w-full text-white font-black text-lg py-4 rounded-2xl shadow-lg btn-press flex items-center justify-center gap-2"
-          style={{ background: 'linear-gradient(135deg, #4F7CFF 0%, #7299FF 100%)' }}>
+          className="w-full bg-white text-primary-500 font-bold text-base py-3.5 rounded-full border border-primary-200 shadow-card btn-press flex items-center justify-center gap-2">
           <span>📸</span><span>Nouveau devoir</span>
         </button>
         <Link href="/history"
-          className="w-full bg-white text-[#8E8E93] font-bold text-base py-3.5 rounded-2xl border border-gray-100 shadow-sm btn-press flex items-center justify-center gap-2">
+          className="w-full bg-white text-[#4B5563] font-bold text-base py-3.5 rounded-full border border-gray-100 shadow-card btn-press flex items-center justify-center gap-2">
           <span>🕐</span><span>Voir mon historique</span>
         </Link>
       </div>
