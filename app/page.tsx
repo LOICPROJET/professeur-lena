@@ -1,12 +1,24 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import SubjectSelector from '@/components/SubjectSelector'
 import ResultCards from '@/components/ResultCards'
 import CameraCapture from '@/components/CameraCapture'
 import BottomNav from '@/components/BottomNav'
+import ChildSelector from '@/components/ChildSelector'
 import { CorrectionResultV2, ChildProfile } from '@/lib/types'
-import { saveHomework, generateId, resizeImageForStorage, getChildren, getActiveChildId, setActiveChildId } from '@/lib/storage'
+import {
+  saveHomework,
+  generateId,
+  resizeImageForStorage,
+  getChildren,
+  getActiveChildId,
+  setActiveChildId,
+  runMigration,
+  canAddChild,
+  getOrCreateActiveChild,
+} from '@/lib/storage'
 
 type Step = 'home' | 'subject' | 'preview' | 'loading' | 'results'
 
@@ -29,56 +41,61 @@ function LenaCharacter() {
   )
 }
 
-// ─── Child switcher ───────────────────────────────────────────────────────────
-function ChildSwitcher({ active, children, onSwitch }: {
-  active: ChildProfile | null
-  children: ChildProfile[]
-  onSwitch: (c: ChildProfile) => void
+// ─── Child pill (triggers ChildSelector sheet) ────────────────────────────────
+function ChildPill({
+  active,
+  childCount,
+  onClick,
+}: {
+  active: ChildProfile
+  childCount: number
+  onClick: () => void
 }) {
-  const [open, setOpen] = useState(false)
-  if (!active) return null
-
   return (
-    <div className="relative flex justify-center">
-      <button
-        onClick={() => children.length > 1 && setOpen(o => !o)}
-        className={`flex items-center gap-1.5 bg-white rounded-full px-3 py-1.5 shadow-sm border border-gray-100 ${children.length > 1 ? 'btn-press' : ''}`}
-      >
-        <span className="text-base">{active.emoji}</span>
-        <span className="text-sm font-bold text-[#1F2937]">{active.name}</span>
+    <button
+      onClick={onClick}
+      className="flex items-center gap-1.5 bg-white rounded-full px-3 py-1.5 shadow-sm border border-gray-100 btn-press"
+    >
+      <span className="text-base">{active.emoji}</span>
+      <span className="text-sm font-black text-[#1F2937]">{active.name}</span>
+      {active.level && (
         <span className="text-xs text-gray-400 font-medium">{active.level}</span>
-        {children.length > 1 && <span className="text-gray-400 text-xs ml-0.5">▾</span>}
-      </button>
-      {open && (
-        <div className="absolute top-10 left-1/2 -translate-x-1/2 bg-white rounded-2xl shadow-lg border border-gray-100 z-50 overflow-hidden min-w-[160px]">
-          {children.map(c => (
-            <button key={c.id} onClick={() => { onSwitch(c); setOpen(false) }}
-              className={`w-full flex items-center gap-2 px-4 py-3 text-sm font-bold btn-press ${c.id === active.id ? 'bg-primary-50 text-primary-600' : 'text-[#1F2937]'}`}>
-              <span>{c.emoji}</span><span>{c.name}</span><span className="text-xs text-gray-400 font-medium ml-auto">{c.level}</span>
-            </button>
-          ))}
-        </div>
       )}
-    </div>
+      {childCount > 1 && <span className="text-gray-300 text-xs ml-0.5">▾</span>}
+      {childCount === 1 && <span className="text-gray-300 text-xs ml-0.5">⌃</span>}
+    </button>
   )
 }
 
 // ─── Home screen ──────────────────────────────────────────────────────────────
-function HomeScreen({ onCapture, activeChild, children, onSwitch }: {
+function HomeScreen({
+  onCapture,
+  activeChild,
+  childList,
+  onOpenSelector,
+}: {
   onCapture: (file: File, dataUrl: string) => void
   activeChild: ChildProfile | null
-  children: ChildProfile[]
-  onSwitch: (c: ChildProfile) => void
+  childList: ChildProfile[]
+  onOpenSelector: () => void
 }) {
   const name = activeChild ? activeChild.name : 'toi'
+
   return (
     <div className="flex flex-col min-h-screen pb-20">
       <div className="h-12" />
+
+      {/* Active child pill */}
       {activeChild && (
         <div className="px-6 pt-3 pb-0 flex justify-center">
-          <ChildSwitcher active={activeChild} children={children} onSwitch={onSwitch} />
+          <ChildPill
+            active={activeChild}
+            childCount={childList.length}
+            onClick={onOpenSelector}
+          />
         </div>
       )}
+
       <div className="px-6 pt-3 pb-2 text-center">
         <h1 className="text-3xl font-black text-[#1F2937] leading-tight">
           Bonjour {name} 👋
@@ -88,12 +105,15 @@ function HomeScreen({ onCapture, activeChild, children, onSwitch }: {
           je vais t'aider à comprendre.
         </p>
       </div>
+
       <div className="flex justify-center mt-6 mb-8">
         <LenaCharacter />
       </div>
+
       <div className="px-6 mt-auto">
         <CameraCapture onCapture={onCapture} />
       </div>
+
       <BottomNav />
     </div>
   )
@@ -101,10 +121,17 @@ function HomeScreen({ onCapture, activeChild, children, onSwitch }: {
 
 // ─── Preview screen ───────────────────────────────────────────────────────────
 function PreviewScreen({
-  imageData, subject, onCorrect, onRetake, error,
+  imageData,
+  subject,
+  onCorrect,
+  onRetake,
+  error,
 }: {
-  imageData: string; subject: string; onCorrect: () => void
-  onRetake: () => void; error: string
+  imageData: string
+  subject: string
+  onCorrect: () => void
+  onRetake: () => void
+  error: string
 }) {
   const subjectEmoji: Record<string, string> = {
     Français: '📖', Maths: '🔢', Anglais: '🇬🇧', Histoire: '🏰', Autre: '✨',
@@ -113,7 +140,10 @@ function PreviewScreen({
     <div className="flex flex-col min-h-screen pb-20 animate-fade-in">
       <div className="h-12" />
       <div className="px-6 pt-4 pb-4 flex items-center gap-3">
-        <button onClick={onRetake} className="w-9 h-9 rounded-full bg-white shadow-sm flex items-center justify-center btn-press">
+        <button
+          onClick={onRetake}
+          className="w-9 h-9 rounded-full bg-white shadow-sm flex items-center justify-center btn-press"
+        >
           <span className="text-gray-500 text-lg">←</span>
         </button>
         <div>
@@ -143,14 +173,21 @@ function PreviewScreen({
       </div>
 
       <div className="px-6 mt-6 flex flex-col gap-3">
-        <button onClick={onCorrect} className="w-full text-white font-black text-lg py-4 rounded-2xl shadow-lg shadow-primary-200 btn-press flex items-center justify-center gap-2"
-          style={{ background: 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)' }}>
+        <button
+          onClick={onCorrect}
+          className="w-full text-white font-black text-lg py-4 rounded-2xl shadow-lg shadow-primary-200 btn-press flex items-center justify-center gap-2"
+          style={{ background: 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)' }}
+        >
           <span>🚀</span><span>Corriger mon devoir</span>
         </button>
-        <button onClick={onRetake} className="w-full bg-white text-[#8E8E93] font-bold text-base py-3.5 rounded-2xl border border-gray-100 shadow-sm btn-press flex items-center justify-center gap-2">
+        <button
+          onClick={onRetake}
+          className="w-full bg-white text-[#8E8E93] font-bold text-base py-3.5 rounded-2xl border border-gray-100 shadow-sm btn-press flex items-center justify-center gap-2"
+        >
           <span>🔄</span><span>Reprendre la photo</span>
         </button>
       </div>
+
       <BottomNav />
     </div>
   )
@@ -182,7 +219,7 @@ function LoadingScreen() {
   )
 }
 
-// ─── Resize image before sending to API (reduces 3-5 MB phone photos to ~300 KB) ─
+// ─── Resize image before API call (reduces 3-5 MB → ~300 KB) ─────────────────
 async function resizeImageForAPI(dataUrl: string, maxPx = 1024, quality = 0.82): Promise<Blob> {
   return new Promise((resolve, reject) => {
     const img = new Image()
@@ -204,24 +241,28 @@ async function resizeImageForAPI(dataUrl: string, maxPx = 1024, quality = 0.82):
 
 // ─── Main page ────────────────────────────────────────────────────────────────
 export default function Home() {
+  const router = useRouter()
+
   const [step, setStep] = useState<Step>('home')
   const [subject, setSubject] = useState('')
   const [imageData, setImageData] = useState('')
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [result, setResult] = useState<CorrectionResultV2 | null>(null)
   const [error, setError] = useState('')
+
   const [childList, setChildList] = useState<ChildProfile[]>([])
   const [activeChild, setActiveChild] = useState<ChildProfile | null>(null)
+  const [showSelector, setShowSelector] = useState(false)
+  const [storageWarning, setStorageWarning] = useState(false)
 
-  // Load children on mount
-  useState(() => {
-    const children = getChildren()
-    setChildList(children)
-    const activeId = getActiveChildId()
-    const found = children.find(c => c.id === activeId) ?? children[0] ?? null
-    if (found && found.id !== activeId) setActiveChildId(found.id)
-    setActiveChild(found)
-  })
+  // Run migration + load children on mount
+  // getOrCreateActiveChild() ensures there is always a valid profile
+  useEffect(() => {
+    runMigration()
+    const child = getOrCreateActiveChild()
+    setActiveChild(child)
+    setChildList(getChildren())
+  }, [])
 
   const handlePhotoCapture = useCallback((file: File, dataUrl: string) => {
     setImageFile(file)
@@ -239,9 +280,17 @@ export default function Home() {
     if (!imageFile && !imageData) return
     setStep('loading')
     setError('')
+    setStorageWarning(false)
+
+    // R1 fix: always guarantee a valid child profile before saving
+    // getOrCreateActiveChild() creates "Mon enfant" if no profile exists
+    const targetChild = activeChild ?? getOrCreateActiveChild()
+    if (!activeChild) {
+      setActiveChild(targetChild)
+      setChildList(getChildren())
+    }
 
     try {
-      // Resize before upload — phone cameras produce 3-5 MB, Vercel limit is ~4.5 MB
       const resizedBlob = await resizeImageForAPI(imageData)
       const formData = new FormData()
       formData.append('image', resizedBlob, 'homework.jpg')
@@ -256,16 +305,19 @@ export default function Home() {
       const data: CorrectionResultV2 = await response.json()
       setResult(data)
 
-      // Save to history (resize image first for storage efficiency)
       const thumbnail = await resizeImageForStorage(imageData).catch(() => '')
-      saveHomework({
-        id: generateId(),
-        date: new Date().toISOString(),
-        subject,
-        imageDataUrl: thumbnail,
-        correction: data,
-        childId: activeChild?.id,
-      }, activeChild?.id)
+      const { quotaWarning } = saveHomework(
+        {
+          id: generateId(),
+          date: new Date().toISOString(),
+          subject,
+          imageDataUrl: thumbnail,
+          correction: data,
+          childId: targetChild.id,  // Always a valid childId — never orphaned
+        },
+        targetChild.id,
+      )
+      if (quotaWarning) setStorageWarning(true)
 
       setStep('results')
     } catch (err) {
@@ -273,7 +325,7 @@ export default function Home() {
       setError("Je n'arrive pas bien à lire la photo, peux-tu la reprendre ?")
       setStep('preview')
     }
-  }, [imageFile, subject, imageData])
+  }, [imageFile, subject, imageData, activeChild])
 
   const handleRetakePhoto = useCallback(() => {
     setImageData(''); setImageFile(null); setError(''); setStep('home')
@@ -288,24 +340,71 @@ export default function Home() {
     setActiveChild(c)
   }, [])
 
+  const handleAddChild = useCallback(() => {
+    router.push('/parent')
+  }, [router])
+
+  // Reload child list when returning from parent page (e.g. after adding or editing a child)
+  useEffect(() => {
+    const onFocus = () => {
+      const children = getChildren()
+      setChildList(children)
+      // Use stored active child — don't create a new profile on focus
+      const activeId = getActiveChildId()
+      const found = children.find(c => c.id === activeId) ?? children[0] ?? null
+      if (found) setActiveChild(found)
+    }
+    window.addEventListener('focus', onFocus)
+    return () => window.removeEventListener('focus', onFocus)
+  }, [])
+
   return (
     <main className="min-h-screen bg-[#F9FAF8] max-w-md mx-auto relative overflow-x-hidden">
       {step === 'home' && (
         <HomeScreen
           onCapture={handlePhotoCapture}
           activeChild={activeChild}
-          children={childList}
-          onSwitch={handleChildSwitch}
+          childList={childList}
+          onOpenSelector={() => setShowSelector(true)}
         />
       )}
-      {step === 'subject' && <SubjectSelector onSelect={handleSubjectSelect} onBack={() => setStep('home')} />}
+      {step === 'subject' && (
+        <SubjectSelector onSelect={handleSubjectSelect} onBack={() => setStep('home')} />
+      )}
       {step === 'preview' && (
-        <PreviewScreen imageData={imageData} subject={subject}
-          onCorrect={handleCorrect} onRetake={handleRetakePhoto} error={error} />
+        <PreviewScreen
+          imageData={imageData}
+          subject={subject}
+          onCorrect={handleCorrect}
+          onRetake={handleRetakePhoto}
+          error={error}
+        />
       )}
       {step === 'loading' && <LoadingScreen />}
       {step === 'results' && result && (
-        <ResultCards result={result} subject={subject} onNew={handleNewHomework} />
+        <div>
+          {storageWarning && (
+            <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-2xl shadow-lg text-xs font-bold text-amber-800 bg-amber-50 border border-amber-200 flex items-center gap-2 animate-fade-in"
+              style={{ maxWidth: 'calc(100% - 32px)' }}>
+              <span>💾</span>
+              <span>Stockage presque plein : les anciennes miniatures ont été allégées, mais vos corrections sont conservées.</span>
+              <button onClick={() => setStorageWarning(false)} className="ml-1 text-amber-500 font-black text-sm">✕</button>
+            </div>
+          )}
+          <ResultCards result={result} subject={subject} onNew={handleNewHomework} />
+        </div>
+      )}
+
+      {/* Apple-style child selector bottom sheet */}
+      {showSelector && (
+        <ChildSelector
+          children={childList}
+          activeId={activeChild?.id ?? null}
+          canAdd={canAddChild()}
+          onSelect={handleChildSwitch}
+          onAdd={handleAddChild}
+          onClose={() => setShowSelector(false)}
+        />
       )}
     </main>
   )

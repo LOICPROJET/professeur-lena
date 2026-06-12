@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import BottomNav from '@/components/BottomNav'
 import { ScoreBadge } from '@/components/ResultCards'
-import { getAllHomework, deleteHomework, getActiveChild } from '@/lib/storage'
+import { getAllHomework, deleteHomework, getOrCreateActiveChild } from '@/lib/storage'
 import { HomeworkRecord, SUBJECT_EMOJI, ChildProfile } from '@/lib/types'
 
 // ─── Format date ──────────────────────────────────────────────────────────────
@@ -196,14 +196,14 @@ export default function HistoryPage() {
   const [activeChild, setActiveChild] = useState<ChildProfile | null>(null)
 
   useEffect(() => {
-    const child = getActiveChild()
+    const child = getOrCreateActiveChild()
     setActiveChild(child)
-    setRecords(getAllHomework(child?.id))
+    setRecords(getAllHomework(child.id))
     setLoaded(true)
   }, [])
 
   const handleDelete = (id: string) => {
-    deleteHomework(id, activeChild?.id)
+    deleteHomework(id, activeChild?.id ?? null)
     setRecords((prev) => prev.filter((r) => r.id !== id))
   }
 

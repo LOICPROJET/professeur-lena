@@ -1,8 +1,9 @@
-import { HomeworkRecord, Badge, ChildProfile } from './types'
+import { HomeworkRecord, Badge, ChildProfile, MAX_CHILDREN } from './types'
 
 const STORAGE_KEY = 'professeur-lena-history'      // legacy key (no child)
 const CHILDREN_KEY = 'professeur-lena-children'
 const ACTIVE_CHILD_KEY = 'professeur-lena-active-child'
+const MIGRATION_KEY = 'professeur-lena-migrated-v1'
 const MAX_RECORDS = 100
 
 function homeworkKey(childId: string | null | undefined): string {
@@ -30,12 +31,104 @@ export function saveChild(profile: ChildProfile): void {
 
 export function deleteChild(id: string): void {
   if (typeof window === 'undefined') return
-  const updated = getChildren().filter(c => c.id !== id)
+  const children = getChildren()
+
+  // Guard: never allow deleting the last child profile.
+  // This is also enforced in the UI (handleDeleteRequest + DeleteModal),
+  // but we re-check here as a final safety net against any direct call.
+  if (children.length <= 1) {
+    console.warn('[Léna] Cannot delete the last child profile.')
+    return
+  }
+
+  const updated = children.filter(c => c.id !== id)
   try { localStorage.setItem(CHILDREN_KEY, JSON.stringify(updated)) } catch { /* ignore */ }
-  // Also clear their homework
+
+  // ⚠️ PERMANENT: removes ALL homework records for this child from localStorage.
+  // There is no undo, no recycle bin, no recovery mechanism.
+  // The UI must show a DeleteModal confirmation before calling this function.
   try { localStorage.removeItem(homeworkKey(id)) } catch { /* ignore */ }
-  // If was active child, clear active
-  if (getActiveChildId() === id) setActiveChildId(null)
+
+  // If the deleted child was active, automatically switch to the first remaining child
+  if (getActiveChildId() === id) {
+    setActiveChildId(updated[0]?.id ?? null)
+  }
+}
+
+// ─── Premium limits ───────────────────────────────────────────────────────────
+
+export function canAddChild(): boolean {
+  if (typeof window === 'undefined') return false
+  return getChildren().length < MAX_CHILDREN
+}
+
+// ─── Migration: legacy data → first child profile ─────────────────────────────
+// Runs once on app boot. Copies professeur-lena-history records to
+// professeur-lena-history-{childId} without deleting the original key.
+
+export function runMigration(): void {
+  if (typeof window === 'undefined') return
+  try {
+    if (localStorage.getItem(MIGRATION_KEY)) return
+
+    const legacyRaw = localStorage.getItem(STORAGE_KEY)
+    if (!legacyRaw) {
+      localStorage.setItem(MIGRATION_KEY, '1')
+      return
+    }
+
+    let legacyRecords: HomeworkRecord[]
+    try { legacyRecords = JSON.parse(legacyRaw) }
+    catch { legacyRecords = [] }
+
+    if (!legacyRecords.length) {
+      localStorage.setItem(MIGRATION_KEY, '1')
+      return
+    }
+
+    // Ensure at least one child profile exists
+    const children = getChildren()
+    let targetChild: ChildProfile
+
+    if (children.length === 0) {
+      targetChild = {
+        id: `child_migration_${Date.now()}`,
+        name: 'Mon enfant',
+        emoji: '👧',
+        createdAt: new Date().toISOString(),
+      }
+      saveChild(targetChild)
+      setActiveChildId(targetChild.id)
+    } else {
+      targetChild = children[0]
+      if (!getActiveChildId()) setActiveChildId(targetChild.id)
+    }
+
+    // Merge records into child's storage key (no duplicates by id)
+    const existingForChild = getAllHomework(targetChild.id)
+    const existingIds = new Set(existingForChild.map(r => r.id))
+    const toMigrate = legacyRecords
+      .filter(r => !existingIds.has(r.id))
+      .map(r => ({ ...r, childId: targetChild.id }))
+
+    if (toMigrate.length > 0) {
+      const merged = [...existingForChild, ...toMigrate].slice(0, MAX_RECORDS)
+      let writeSucceeded = false
+      try {
+        localStorage.setItem(homeworkKey(targetChild.id), JSON.stringify(merged))
+        writeSucceeded = true
+      } catch {
+        // Quota exceeded — do NOT set the migration flag so the next boot retries
+        console.warn('[Léna] Migration: quota exceeded. Will retry on next boot.')
+      }
+      if (!writeSucceeded) return  // Leave flag unset → will retry next time
+    }
+
+    // Only reached if nothing to migrate OR write succeeded — safe to mark as done
+    localStorage.setItem(MIGRATION_KEY, '1')
+  } catch (e) {
+    console.warn('[Léna] Migration failed:', e)
+  }
 }
 
 export function getActiveChildId(): string | null {
@@ -55,6 +148,45 @@ export function getActiveChild(): ChildProfile | null {
   const id = getActiveChildId()
   if (!id) return null
   return getChildren().find(c => c.id === id) ?? null
+}
+
+/**
+ * Always returns a valid ChildProfile — never null.
+ * Priority: (1) stored active child → (2) first existing child → (3) create "Mon enfant".
+ * Use this everywhere a childId is required to prevent orphan records.
+ */
+export function getOrCreateActiveChild(): ChildProfile {
+  if (typeof window === 'undefined') {
+    // SSR safety — client-only code should never reach this branch
+    return { id: 'ssr_fallback', name: 'Mon enfant', emoji: '👧', createdAt: new Date().toISOString() }
+  }
+
+  const activeId = getActiveChildId()
+  const children = getChildren()
+
+  // 1. Stored active child exists and is valid
+  if (activeId) {
+    const found = children.find(c => c.id === activeId)
+    if (found) return found
+  }
+
+  // 2. At least one child exists — use the first, update the active pointer
+  if (children.length > 0) {
+    const first = children[0]
+    setActiveChildId(first.id)
+    return first
+  }
+
+  // 3. No profile at all — create a default one so data is never orphaned
+  const newChild: ChildProfile = {
+    id: `child_default_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+    name: 'Mon enfant',
+    emoji: '👧',
+    createdAt: new Date().toISOString(),
+  }
+  saveChild(newChild)
+  setActiveChildId(newChild.id)
+  return newChild
 }
 
 // ─── Generate a simple unique ID ─────────────────────────────────────────────
@@ -107,8 +239,13 @@ export function getHomeworkById(id: string, childId?: string | null): HomeworkRe
 
 // ─── Write ────────────────────────────────────────────────────────────────────
 
-export function saveHomework(record: HomeworkRecord, childId?: string | null): void {
-  if (typeof window === 'undefined') return
+export interface SaveResult {
+  /** true when images had to be stripped because the quota was reached */
+  quotaWarning: boolean
+}
+
+export function saveHomework(record: HomeworkRecord, childId?: string | null): SaveResult {
+  if (typeof window === 'undefined') return { quotaWarning: false }
   const key = homeworkKey(childId)
 
   const tryWrite = (records: HomeworkRecord[]) => {
@@ -120,12 +257,16 @@ export function saveHomework(record: HomeworkRecord, childId?: string | null): v
 
   try {
     tryWrite(updated)
+    return { quotaWarning: false }
   } catch {
+    // First fallback: strip all thumbnails to free space, keep correction data
     try {
       const stripped = updated.map((r) => ({ ...r, imageDataUrl: '' }))
       tryWrite(stripped)
+      return { quotaWarning: true }  // Saved but images stripped
     } catch {
       console.warn('[Léna] Could not save to localStorage (quota exceeded)')
+      return { quotaWarning: true }  // Could not save at all
     }
   }
 }
@@ -346,5 +487,81 @@ export function computeStats(records: HomeworkRecord[]): GlobalStats {
     topWeakSkills,
     topCommonMistakes,
     recentAdvice,
+  }
+}
+
+// ─── Progress stats (temporal analysis) ──────────────────────────────────────
+
+export interface ProgressStats {
+  last7DaysCount: number
+  last30DaysCount: number
+  last7DaysAverage: number       // 0 when no records in window
+  last30DaysAverage: number      // 0 when no records in window
+  previous7DaysAverage: number   // average of the 7 days BEFORE the last 7
+  averageTrend: number           // last7Avg − prev7Avg; 0 if insufficient data
+  mostWorkedSubject: string | null
+  bestSubject: string | null     // highest avg across all records, min 2 entries
+}
+
+function avgOfRecords(items: HomeworkRecord[]): number {
+  if (!items.length) return 0
+  return Math.round((items.reduce((s, r) => s + r.correction.score, 0) / items.length) * 10) / 10
+}
+
+export function computeProgressStats(records: HomeworkRecord[]): ProgressStats {
+  if (!records.length) {
+    return {
+      last7DaysCount: 0, last30DaysCount: 0,
+      last7DaysAverage: 0, last30DaysAverage: 0,
+      previous7DaysAverage: 0, averageTrend: 0,
+      mostWorkedSubject: null, bestSubject: null,
+    }
+  }
+
+  const now = Date.now()
+  const DAY = 86_400_000
+
+  const last7  = records.filter(r => now - new Date(r.date).getTime() < 7 * DAY)
+  const last30 = records.filter(r => now - new Date(r.date).getTime() < 30 * DAY)
+  const prev7  = records.filter(r => {
+    const age = now - new Date(r.date).getTime()
+    return age >= 7 * DAY && age < 14 * DAY
+  })
+
+  const last7Avg = avgOfRecords(last7)
+  const prev7Avg = avgOfRecords(prev7)
+
+  // Subject analysis across ALL records
+  const subjectCount: Record<string, number> = {}
+  const subjectScores: Record<string, number[]> = {}
+  for (const r of records) {
+    subjectCount[r.subject] = (subjectCount[r.subject] || 0) + 1
+    if (!subjectScores[r.subject]) subjectScores[r.subject] = []
+    subjectScores[r.subject].push(r.correction.score)
+  }
+
+  const mostWorkedSubject = Object.entries(subjectCount)
+    .sort((a, b) => b[1] - a[1])[0]?.[0] ?? null
+
+  // bestSubject requires ≥ 2 records to be meaningful
+  const bestSubject = Object.entries(subjectScores)
+    .filter(([, scores]) => scores.length >= 2)
+    .map(([subject, scores]) => ({
+      subject,
+      avg: scores.reduce((a, b) => a + b, 0) / scores.length,
+    }))
+    .sort((a, b) => b.avg - a.avg)[0]?.subject ?? null
+
+  return {
+    last7DaysCount: last7.length,
+    last30DaysCount: last30.length,
+    last7DaysAverage: last7Avg,
+    last30DaysAverage: avgOfRecords(last30),
+    previous7DaysAverage: prev7Avg,
+    averageTrend: last7.length > 0 && prev7.length > 0
+      ? Math.round((last7Avg - prev7Avg) * 10) / 10
+      : 0,
+    mostWorkedSubject,
+    bestSubject,
   }
 }

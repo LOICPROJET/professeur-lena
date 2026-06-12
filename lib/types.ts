@@ -46,14 +46,19 @@ export interface QuizResult {
   encouragement: string
 }
 
+// ─── Premium / family limits ──────────────────────────────────────────────────
+
+export const IS_PREMIUM = true                 // set false → free tier (1 child max)
+export const MAX_CHILDREN = IS_PREMIUM ? 3 : 1
+
 // ─── Child profile ────────────────────────────────────────────────────────────
 
 export interface ChildProfile {
   id: string
   name: string
-  age: number
-  level: string  // CP, CE1, CE2, CM1, CM2, 6ème, 5ème, 4ème, 3ème
-  emoji: string  // 👦 👧 🧒
+  emoji: string           // '👧' | '👦' | '🧒'
+  age?: number            // optional
+  level?: string          // CP, CE1, CE2, CM1, CM2, 6ème, 5ème, 4ème, 3ème (optional)
   createdAt: string
 }
 

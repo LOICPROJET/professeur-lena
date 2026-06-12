@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from 'react'
 import BottomNav from '@/components/BottomNav'
-import { getAllHomework, computeBadges, getActiveChild } from '@/lib/storage'
+import { getAllHomework, computeBadges, computeProgressStats, getOrCreateActiveChild, ProgressStats } from '@/lib/storage'
 import { HomeworkRecord, Badge, ChildProfile, SUBJECT_EMOJI } from '@/lib/types'
+import WeekTimeline from '@/components/WeekTimeline'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -155,15 +156,17 @@ function BadgeTile({ badge }: { badge: Badge }) {
 export default function ProgressPage() {
   const [records, setRecords] = useState<HomeworkRecord[]>([])
   const [badges, setBadges] = useState<Badge[]>([])
+  const [progressStats, setProgressStats] = useState<ProgressStats | null>(null)
   const [loaded, setLoaded] = useState(false)
   const [activeChild, setActiveChild] = useState<ChildProfile | null>(null)
 
   useEffect(() => {
-    const child = getActiveChild()
+    const child = getOrCreateActiveChild()
     setActiveChild(child)
-    const hw = getAllHomework(child?.id)
+    const hw = getAllHomework(child.id)
     setRecords(hw)
     setBadges(computeBadges(hw))
+    setProgressStats(computeProgressStats(hw))
     setLoaded(true)
   }, [])
 
@@ -216,10 +219,21 @@ export default function ProgressPage() {
         </h1>
         <p className="text-sm text-[#8E8E93] font-medium mt-1">Tes progrès au fil du temps</p>
       </div>
-      <div className="flex-1 flex flex-col items-center justify-center px-6 gap-4">
-        <div className="text-6xl">📚</div>
-        <p className="font-bold text-[#1F2937] text-center">Aucun exercice pour l'instant</p>
-        <p className="text-sm text-[#8E8E93] text-center">Fais corriger ton premier devoir pour voir tes progrès ici !</p>
+      <div className="px-5 flex flex-col gap-4">
+        <div className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 flex flex-col gap-4">
+          <div className="bg-primary-50 border border-primary-100 rounded-xl px-4 py-3 text-sm font-semibold text-primary-700 leading-snug">
+            Aucun exercice cette semaine. Tu peux reprendre quand tu veux ! 💪
+          </div>
+          <div>
+            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-3">Ma semaine</p>
+            <WeekTimeline records={[]} showScore={false} />
+          </div>
+        </div>
+        <div className="flex flex-col items-center justify-center px-6 py-8 gap-3">
+          <div className="text-6xl">📚</div>
+          <p className="font-bold text-[#1F2937] text-center">Aucun exercice pour l'instant</p>
+          <p className="text-sm text-[#8E8E93] text-center">Fais corriger ton premier devoir pour voir tes progrès ici !</p>
+        </div>
       </div>
       <BottomNav />
     </div>
@@ -249,6 +263,65 @@ export default function ProgressPage() {
           />
           <StatChip icon="🔥" value={streak} label={streak === 1 ? 'jour' : 'jours'} />
         </div>
+
+        {/* Motivational message + 7/30-day activity */}
+        {progressStats && (
+          <div className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 flex flex-col gap-4">
+            {/* Message enfant */}
+            {(() => {
+              const n = progressStats.last7DaysCount
+              let msg = ''
+              let color = 'bg-primary-50 border-primary-100 text-primary-700'
+              if (n === 0) {
+                msg = 'Aucun exercice cette semaine. Tu peux reprendre quand tu veux ! 💪'
+                color = 'bg-gray-50 border-gray-200 text-gray-600'
+              } else if (n >= 5) {
+                msg = `Bravo, tu as travaillé ${n} fois cette semaine ! Tu es super assidu(e) ! 🌟`
+                color = 'bg-green-50 border-green-100 text-green-700'
+              } else if (n >= 3) {
+                msg = `Bravo, tu as travaillé ${n} fois cette semaine ! Continue comme ça ! 🔥`
+                color = 'bg-green-50 border-green-100 text-green-700'
+              } else if (n === 1) {
+                msg = `Tu as fait 1 exercice cette semaine. Chaque effort compte ! 🌱`
+                color = 'bg-primary-50 border-primary-100 text-primary-700'
+              } else {
+                msg = `Tu as fait ${n} exercices cette semaine. Bien joué ! ⭐`
+                color = 'bg-primary-50 border-primary-100 text-primary-700'
+              }
+              return (
+                <div className={`rounded-xl border px-4 py-3 text-sm font-semibold leading-snug ${color}`}>
+                  {msg}
+                </div>
+              )
+            })()}
+
+            {/* 7-day timeline */}
+            <div>
+              <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-3">
+                Ma semaine
+              </p>
+              <WeekTimeline records={records} showScore={false} />
+            </div>
+
+            {/* 7j / 30j quick stats */}
+            <div className="grid grid-cols-2 gap-2">
+              <div className="bg-primary-50 rounded-xl p-3 text-center">
+                <p className="text-[11px] font-bold text-primary-600">7 jours</p>
+                <p className="font-black text-xl text-primary-700">{progressStats.last7DaysCount}</p>
+                <p className="text-[11px] text-primary-500">
+                  {progressStats.last7DaysAverage > 0 ? `moy. ${progressStats.last7DaysAverage}/20` : 'exercice(s)'}
+                </p>
+              </div>
+              <div className="bg-gray-50 rounded-xl p-3 text-center">
+                <p className="text-[11px] font-bold text-gray-500">30 jours</p>
+                <p className="font-black text-xl text-[#1F2937]">{progressStats.last30DaysCount}</p>
+                <p className="text-[11px] text-gray-400">
+                  {progressStats.last30DaysAverage > 0 ? `moy. ${progressStats.last30DaysAverage}/20` : 'exercice(s)'}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* 7-day trend */}
         {trendVal !== null && (
